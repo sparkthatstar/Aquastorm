@@ -1,0 +1,6 @@
+{
+  "name": "Aquastorm Enterprise",
+  "description": "Hyperlocal Water Booking & Hostel Convenience Delivery Platform for ESUTH campus hostels. Book Today. Drink Tomorrow.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
