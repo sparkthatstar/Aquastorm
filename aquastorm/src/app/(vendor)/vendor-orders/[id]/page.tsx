@@ -36,7 +36,7 @@ export default async function VendorOrderDetail({ params }: { params: { id: stri
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-20">
-      <Link href="/dashboard" className="text-cyan-600 text-sm hover:underline">← Back to Dashboard</Link>
+      <Link href="/vendor-dashboard" className="text-cyan-600 text-sm hover:underline">← Back to Dashboard</Link>
       
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h1 className="text-xl font-bold text-gray-900 mb-4">Order Details</h1>
