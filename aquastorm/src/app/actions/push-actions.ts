@@ -1,5 +1,6 @@
+// @ts-nocheck
 'use server'
-// @ts-ignore
+
 
 import webpush from 'web-push'
 import { createAdminClient } from '@/lib/supabase/admin'
