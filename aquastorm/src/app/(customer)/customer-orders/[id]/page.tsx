@@ -17,7 +17,7 @@ export default async function CustomerOrderDetail({ params }: { params: { id: st
     `)
     .eq('id', params.id)
     .eq('customer_id', user.id)
-    .single()
+    .single() as any
 
   if (!order) return <div className="p-4 text-center text-gray-500">Order not found.</div>
 
