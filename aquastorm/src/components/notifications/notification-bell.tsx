@@ -78,8 +78,8 @@ export default function NotificationBell() {
     await supabase.from('push_subscriptions').upsert({
       user_id: user.id,
       endpoint: subscription.endpoint,
-      p256dh: subscription.getKey('p256dh') ? btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')))) : null,
-      auth: subscription.getKey('auth') ? btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')))) : null
+          p256dh: subscription.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(subscription.getKey('p256dh') as Buffer)))) : null,
+      auth: subscription.getKey('auth') ? btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(subscription.getKey('auth') as Buffer)))) : null
     }, { onConflict: 'endpoint' })
   }
 
