@@ -17,9 +17,15 @@ function canAccess(role: string, pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next()
 
+  // 1. Check if Supabase keys exist (prevents instant crash)
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.error("Missing Supabase Environment Variables in Vercel!")
+    return response // Let the page load so we can see other errors
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll() {
@@ -37,28 +43,34 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const pathname = request.nextUrl.pathname
 
+  // 2. Let people visit the homepage, login, and signup without being blocked
   const publicRoutes = ['/login', '/signup', '/auth/callback', '/', '/forgot-password']
   if (publicRoutes.some((r) => pathname === r || pathname.startsWith(r + '/'))) {
+    // If they are logged in and go to login, send them to the Traffic Cop (/)
     if (user && (pathname === '/login' || pathname === '/signup')) {
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-      if (profile) return NextResponse.redirect(new URL('/', request.url))
+      return NextResponse.redirect(new URL('/', request.url))
     }
+    // Otherwise, let them view the page
     return response
   }
 
+  // 3. If they try to visit a protected page (like /owner-dashboard) without logging in
   if (!user) {
     const redirectUrl = new URL('/login', request.url)
     redirectUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(redirectUrl)
   }
 
+  // 4. Fetch their role
   const { data: profile } = await supabase.from('profiles').select('role, is_active').eq('id', user.id).single()
 
   if (!profile || !profile.is_active) {
     return NextResponse.redirect(new URL('/login?error=inactive', request.url))
   }
 
+  // 5. If they don't have permission (e.g., customer trying to view /owner-dashboard)
   if (!canAccess(profile.role, pathname)) {
+    // Send them to the Traffic Cop (/) which will redirect them to THEIR dashboard
     return NextResponse.redirect(new URL('/', request.url))
   }
 
