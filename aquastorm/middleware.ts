@@ -41,7 +41,7 @@ export async function middleware(request: NextRequest) {
   if (publicRoutes.some((r) => pathname === r || pathname.startsWith(r + '/'))) {
     if (user && (pathname === '/login' || pathname === '/signup')) {
       const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-      if (profile) return NextResponse.redirect(new URL('/dashboard', request.url))
+      if (profile) return NextResponse.redirect(new URL('/', request.url))
     }
     return response
   }
