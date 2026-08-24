@@ -13,10 +13,10 @@ export function getDashboardPath(role: UserRole): string {
 }
 
 export const ROLE_ROUTES: Record<UserRole, string[]> = {
-  customer: ['/dashboard', '/orders', '/profile', '/chat', '/notifications', '/support', '/settings'],
-  vendor: ['/dashboard', '/orders', '/profile', '/chat', '/notifications', '/inventory', '/points', '/cashout', '/settings'],
-  manager: ['/dashboard', '/orders', '/vendors', '/customers', '/inventory', '/support', '/payments', '/ratings', '/notifications', '/analytics', '/settings'],
-  owner: ['/dashboard', '/orders', '/vendors', '/customers', '/managers', '/inventory', '/support', '/payments', '/ratings', '/communications', '/audit', '/points', '/cashout', '/analytics', '/settings', '/notifications'],
+  customer: ['/customer-dashboard', '/customer-orders', '/profile', '/chat', '/notifications', '/support', '/settings'],
+  vendor: ['/vendor-dashboard', '/vendor-orders', '/profile', '/chat', '/notifications', '/inventory', '/points', '/cashout', '/settings'],
+  manager: ['/manager-dashboard', '/vendor-orders', '/vendors', '/customers', '/inventory', '/support', '/payments', '/ratings', '/notifications', '/analytics', '/settings'],
+  owner: ['/owner-dashboard', '/vendor-orders', '/vendors', '/customers', '/managers', '/inventory', '/support', '/payments', '/ratings', '/communications', '/audit', '/points', '/cashout', '/analytics', '/settings', '/notifications'],
 }
 
 export function canAccessPath(role: UserRole, pathname: string): boolean {

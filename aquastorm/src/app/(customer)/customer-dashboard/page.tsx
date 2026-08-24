@@ -50,7 +50,7 @@ export default async function CustomerDashboard() {
             <Step active={['out_for_delivery', 'delivered'].includes(activeOrder.status)} icon="🚴" label="En route" />
             <Step active={activeOrder.status === 'delivered'} icon="🏠" label="Delivered" />
           </div>
-          <Link href={`/orders/${activeOrder.id}`} className="block text-center mt-4 text-cyan-600 font-semibold text-sm hover:underline">
+          <Link href={`/customer-orders/${activeOrder.id}`} className="block text-center mt-4 text-cyan-600 font-semibold text-sm hover:underline">
             View Details
           </Link>
         </div>
@@ -60,13 +60,13 @@ export default async function CustomerDashboard() {
         <div className="text-6xl mb-4">💧</div>
         <h2 className="text-xl font-bold mb-1">Order Water</h2>
         <p className="text-cyan-100 text-sm mb-6">Fresh bags delivered fast.</p>
-        <Link href="/orders/new" className="block bg-white text-cyan-600 font-bold py-3 rounded-lg hover:bg-cyan-50 transition-colors">
+        <Link href="/customer-orders/new" className="block bg-white text-cyan-600 font-bold py-3 rounded-lg hover:bg-cyan-50 transition-colors">
           Start New Order
         </Link>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Link href="/orders/history" className="bg-white rounded-xl shadow-sm p-4 flex flex-col items-center justify-center border border-gray-100 hover:border-cyan-200">
+        <Link href="/customer-orders/history" className="bg-white rounded-xl shadow-sm p-4 flex flex-col items-center justify-center border border-gray-100 hover:border-cyan-200">
           <span className="text-2xl mb-1">📜</span>
           <span className="text-sm font-semibold text-gray-700">History</span>
         </Link>

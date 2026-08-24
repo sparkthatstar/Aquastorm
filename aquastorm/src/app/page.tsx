@@ -19,5 +19,5 @@ export default async function Home() {
     redirect('/login')
   }
 
-  redirect('/dashboard')
+  redirect('/customer-dashboard')
 }
