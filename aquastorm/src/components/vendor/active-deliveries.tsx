@@ -65,7 +65,7 @@ export default function ActiveDeliveries({ orders }: { orders: any[] }) {
 
         return (
           <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <Link href={`/orders/${order.id}`} className="block hover:bg-gray-50 transition-colors">
+            <Link href={`/vendor-orders/${order.id}`} className="block hover:bg-gray-50 transition-colors">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <span className="font-bold text-gray-900 text-lg">{order.quantity_ordered} bags</span>
