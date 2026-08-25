@@ -31,3 +31,4 @@ export default async function Home() {
   // Fallback just in case
   redirect('/login')
 }
+ 
