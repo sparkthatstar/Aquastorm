@@ -17,60 +17,67 @@ function canAccess(role: string, pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next()
 
-  // 1. Check if Supabase keys exist (prevents instant crash)
+  // 1. Initialize Supabase safely
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.error("Missing Supabase Environment Variables in Vercel!")
-    return response // Let the page load so we can see other errors
+    return response
   }
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
+  let supabase
+  try {
+    supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet: { name: string; value: string; options: any }[]) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options)
+            })
+          },
         },
-        setAll(cookiesToSet: { name: string; value: string; options: any }[]) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options)
-          })
-        },
-      },
-    }
-  )
+      }
+    )
+  } catch (e) {
+    console.error("Supabase client init error:", e)
+    return response
+  }
 
   const { data: { user } } = await supabase.auth.getUser()
   const pathname = request.nextUrl.pathname
 
-  // 2. Let people visit the homepage, login, and signup without being blocked
+  // 2. Public routes (Let them through without ANY redirects to prevent loops)
   const publicRoutes = ['/login', '/signup', '/auth/callback', '/', '/forgot-password']
   if (publicRoutes.some((r) => pathname === r || pathname.startsWith(r + '/'))) {
-    // If they are logged in and go to login, send them to the Traffic Cop (/)
-    if (user && (pathname === '/login' || pathname === '/signup')) {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
-    // Otherwise, let them view the page
     return response
   }
 
-  // 3. If they try to visit a protected page (like /owner-dashboard) without logging in
+  // 3. If not logged in and trying to access protected route
   if (!user) {
     const redirectUrl = new URL('/login', request.url)
     redirectUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(redirectUrl)
   }
 
-  // 4. Fetch their role
-  const { data: profile } = await supabase.from('profiles').select('role, is_active').eq('id', user.id).single()
+  // 4. Fetch profile
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('role, is_active')
+    .eq('id', user.id)
+    .single()
 
-  if (!profile || !profile.is_active) {
-    return NextResponse.redirect(new URL('/login?error=inactive', request.url))
+  // 5. If profile is broken or inactive, force them to login page (and let them stay there to logout)
+  if (error || !profile || !profile.is_active) {
+    if (pathname !== '/login') {
+      return NextResponse.redirect(new URL('/login?error=inactive', request.url))
+    }
+    return response
   }
 
-  // 5. If they don't have permission (e.g., customer trying to view /owner-dashboard)
+  // 6. If they don't have permission, send them to Traffic Cop (/)
   if (!canAccess(profile.role, pathname)) {
-    // Send them to the Traffic Cop (/) which will redirect them to THEIR dashboard
     return NextResponse.redirect(new URL('/', request.url))
   }
 
