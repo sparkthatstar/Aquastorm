@@ -17,7 +17,7 @@ export default async function VendorOrderDetail({ params }: { params: { id: stri
     `)
     .eq('id', params.id)
     .eq('vendor_id', user.id)
-    .single()
+    .single() as any
 
   if (!order) return <div className="p-4 text-center text-gray-500">Order not found or not assigned to you.</div>
 
@@ -36,7 +36,7 @@ export default async function VendorOrderDetail({ params }: { params: { id: stri
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-20">
-      <Link href="/dashboard" className="text-cyan-600 text-sm hover:underline">← Back to Dashboard</Link>
+      <Link href="/vendor-dashboard" className="text-cyan-600 text-sm hover:underline">← Back to Dashboard</Link>
       
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h1 className="text-xl font-bold text-gray-900 mb-4">Order Details</h1>

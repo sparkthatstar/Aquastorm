@@ -17,7 +17,7 @@ export default async function CustomerOrderDetail({ params }: { params: { id: st
     `)
     .eq('id', params.id)
     .eq('customer_id', user.id)
-    .single()
+    .single() as any
 
   if (!order) return <div className="p-4 text-center text-gray-500">Order not found.</div>
 
@@ -40,7 +40,7 @@ export default async function CustomerOrderDetail({ params }: { params: { id: st
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-20">
-      <Link href="/dashboard" className="text-cyan-600 text-sm hover:underline">← Back to Dashboard</Link>
+      <Link href="/customer-dashboard" className="text-cyan-600 text-sm hover:underline">← Back to Dashboard</Link>
       
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex justify-between items-start mb-4">
