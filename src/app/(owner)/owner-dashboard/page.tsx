@@ -111,7 +111,7 @@ export default async function OwnerDashboard() {
 
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Recent Orders & Dispatch</h2>
-        <StaffOrders orders={orders || []} vendors={vendors?.map(v => v.profile).filter(Boolean) || []} canAssign={true} />
+        <StaffOrders orders={orders || []} vendors={allUsers || []} canAssign={true} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
