@@ -69,7 +69,9 @@ export default function ActiveDeliveries({ orders }: { orders: any[] }) {
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <span className="font-bold text-gray-900 text-lg">{order.quantity_ordered} bags</span>
-                  <p className="text-sm text-gray-500">Room {order.customer.room_number}</p>
+                  <p className="text-sm text-gray-500">
+                    {order.customer?.full_name || 'Unknown Customer'} • Room {order.customer?.customers?.[0]?.room_number || 'N/A'}
+                  </p>
                   {order.comment && <p className="text-xs text-gray-400 mt-1 italic">"Note: {order.comment}"</p>}
                 </div>
                 <span className="text-xs font-semibold uppercase tracking-wider bg-cyan-100 text-cyan-700 px-2 py-1 rounded-full">
