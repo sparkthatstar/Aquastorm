@@ -34,9 +34,13 @@ export default async function ManagerDashboard() {
     .order('created_at', { ascending: false })
     .limit(10)
 
-    const { data: vendors } = await supabase
+      const { data: vendors } = await supabase
     .from('vendors')
-    .select('profile_id, is_approved')
+    .select(`
+      profile_id, 
+      is_approved, 
+      profile:profiles!vendors_profile_id_fkey ( id, full_name )
+    `)
     .eq('is_approved', true)
 
   const { count: totalOrders } = await supabase.from('orders').select('*', { count: 'exact', head: true })
