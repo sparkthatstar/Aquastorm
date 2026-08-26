@@ -60,7 +60,7 @@ export default function OrderFlow() {
         }
       }
 
-      router.push('/dashboard')
+      router.push('/customer-dashboard')
       router.refresh()
         } catch (err: any) {
       console.error("Order Error:", err)
