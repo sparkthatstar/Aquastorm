@@ -11,20 +11,28 @@ export default function StaffInventory({ vendors }: { vendors: any[] }) {
 
   async function addStock(vendorId: string) {
     const qty = parseInt(stockInput[vendorId] || '0')
-    if (qty === 0) return
+    if (qty === 0) return alert("Please enter a quantity greater than 0.")
 
-    await supabase.rpc('adjust_inventory', {
+    // Call the secure database function to add stock
+    const { error } = await supabase.rpc('adjust_inventory', {
       p_vendor_id: vendorId,
       p_quantity: qty,
-      p_note: 'Manual stock addition'
+      p_note: 'Manual stock addition by staff'
     })
     
-    setStockInput({ ...stockInput, [vendorId]: '' })
-    router.refresh()
+    if (error) {
+      alert("Error adding stock: " + error.message)
+    } else {
+      alert(`Successfully added ${qty} bags to inventory!`)
+      setStockInput({ ...stockInput, [vendorId]: '' })
+      router.refresh()
+    }
   }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
+      {vendors.length === 0 && <p className="text-gray-500 text-sm text-center py-4">No approved vendors found.</p>}
+      
       {vendors.map((v) => (
         <div key={v.profile.id} className="flex items-center justify-between border-b pb-3 last:border-0">
           <div>
