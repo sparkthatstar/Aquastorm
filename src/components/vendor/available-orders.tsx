@@ -41,7 +41,7 @@ export default function AvailableOrders({ orders }: { orders: any[] }) {
               <span className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600 capitalize">{order.payment_method}</span>
             </div>
             <p className="text-sm text-gray-500">
-              Room {order.customer.room_number} • ⭐ {order.customer.aggregate_rating?.toFixed(1) || 'New'} 
+              {order.customer?.full_name || 'Unknown Customer'} • Room {order.customer?.customers?.[0]?.room_number || 'N/A'}
             </p>
             <p className="text-xs text-gray-400 mt-1">₦{order.total_amount.toLocaleString()}</p>
           </div>
