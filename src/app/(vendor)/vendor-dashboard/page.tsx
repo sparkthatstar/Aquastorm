@@ -21,11 +21,11 @@ export default async function VendorDashboard() {
     .eq('vendor_id', user!.id)
     .single()
 
-    const { data: availableOrders } = await supabase
+      const { data: availableOrders } = await supabase
     .from('orders')
     .select(`
       id, quantity_ordered, total_amount, payment_method, created_at,
-      customer:profiles!orders_customer_id_fkey ( full_name )
+      customer:profiles!orders_customer_id_fkey ( full_name, customers ( room_number ) )
     `)
     .in('status', ['placed', 'available'])
     .order('created_at', { ascending: false })
