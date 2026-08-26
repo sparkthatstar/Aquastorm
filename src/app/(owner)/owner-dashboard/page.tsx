@@ -67,14 +67,9 @@ export default async function OwnerDashboard() {
     .order('created_at', { ascending: false })
     .limit(10)
 
-      const { data: vendors } = await supabase
+ const { data: vendors } = await supabase
     .from('vendors')
-    .select(`
-      is_approved, 
-      profile_id,
-      profile:profiles!profile_id ( full_name ),
-      inventory:inventory ( available, reserved, delivered )
-    `)
+    .select('profile_id, is_approved')
     .eq('is_approved', true)
 
   const { count: totalOrders } = await supabase.from('orders').select('*', { count: 'exact', head: true })
