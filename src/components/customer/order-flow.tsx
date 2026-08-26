@@ -62,7 +62,9 @@ export default function OrderFlow() {
 
       router.push('/dashboard')
       router.refresh()
-    } catch (err: any) {
+        } catch (err: any) {
+      console.error("Order Error:", err)
+      alert(err.message || 'Failed to place order')
       setError(err.message || 'Failed to place order')
       setLoading(false)
     }
