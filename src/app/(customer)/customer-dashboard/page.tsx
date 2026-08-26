@@ -9,7 +9,7 @@ export default async function CustomerDashboard() {
     .from('profiles')
     .select('full_name')
     .eq('id', user!.id)
-    .single()
+    .maybeSingle()
 
   const { data: activeOrder } = await supabase
     .from('orders')
