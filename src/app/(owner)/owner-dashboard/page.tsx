@@ -14,12 +14,12 @@ export default async function OwnerDashboard() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: removalRequests } = await supabase
+    const { data: removalRequests } = await supabase
     .from('manager_action_requests')
     .select(`
       id, metadata, created_at,
-      manager:profiles!manager_action_requests_manager_id_fkey ( full_name ),
-      vendor:profiles!manager_action_requests_target_id_fkey ( full_name )
+      manager:profiles!manager_id ( full_name ),
+      vendor:profiles!target_id ( full_name )
     `)
     .eq('action_type', 'vendor_removal')
     .eq('status', 'pending')
