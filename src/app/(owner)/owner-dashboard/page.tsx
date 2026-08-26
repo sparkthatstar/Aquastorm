@@ -150,7 +150,7 @@ export default async function OwnerDashboard() {
 
               <div>
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Vendor Inventory</h2>
-          <StaffInventory vendors={vendors || []} profiles={allUsers || []} />
+          <StaffInventory vendors={vendors || []} />
         </div>
 
       <div>
