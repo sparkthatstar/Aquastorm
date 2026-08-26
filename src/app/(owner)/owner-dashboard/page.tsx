@@ -67,12 +67,12 @@ export default async function OwnerDashboard() {
     .order('created_at', { ascending: false })
     .limit(10)
 
-  const { data: vendors } = await supabase
+    const { data: vendors } = await supabase
     .from('vendors')
     .select(`
       is_approved, aggregate_rating,
-      profile:profiles ( id, full_name ),
-      inventory:inventory ( available, reserved, delivered )
+      profile:profiles!vendors_profile_id_fkey ( id, full_name ),
+      inventory:inventory!inventory_vendor_id_fkey ( available, reserved, delivered )
     `)
     .eq('is_approved', true)
 
