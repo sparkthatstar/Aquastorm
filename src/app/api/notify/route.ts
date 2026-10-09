@@ -10,15 +10,20 @@ const supabaseAdmin = createClient(
   { auth: { persistSession: false } }
 )
 
-// Configure Web Push with your VAPID keys
-webpush.setVapidDetails(
-  'mailto:support@aquastorm.app',
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-)
-
 export async function POST(req: Request) {
   try {
+    // 1. Verify VAPID keys exist
+    if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
+      return NextResponse.json({ error: 'VAPID keys not configured' }, { status: 500 })
+    }
+
+    // 2. Configure Web Push inside the request handler (prevents build-time crash)
+    webpush.setVapidDetails(
+      'mailto:support@aquastorm.app',
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    )
+
     const body = await req.json()
     
     // Supabase webhooks send the data inside a 'record' object
@@ -29,7 +34,7 @@ export async function POST(req: Request) {
 
     const { recipient_id, title, body: message } = notification
 
-    // 1. Fetch all push subscriptions for this user
+    // 3. Fetch all push subscriptions for this user
     const { data: subscriptions } = await supabaseAdmin
       .from('push_subscriptions')
       .select('endpoint, p256dh, auth')
@@ -42,7 +47,7 @@ export async function POST(req: Request) {
 
     const payload = JSON.stringify({ title, body: message })
 
-    // 2. Send push to all user's devices
+    // 4. Send push to all user's devices
     for (const sub of subscriptions) {
       const pushSubscription = {
         endpoint: sub.endpoint,
