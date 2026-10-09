@@ -12,10 +12,10 @@ export default async function SignupPage() {
       .select('role')
       .eq('id', user.id)
       .single()
-    if (profile) redirect('/dashboard')
+    if (profile) redirect('/')
   }
 
-    return (
+  return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-cyan-900 to-blue-900 p-4">
       <div className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl p-8 w-full max-w-md animate-fade-in-up">
         <div className="text-center mb-8">
@@ -27,3 +27,4 @@ export default async function SignupPage() {
       </div>
     </div>
   )
+}
