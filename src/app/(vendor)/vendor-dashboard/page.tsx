@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import AvailableOrders from '@/components/vendor/available-orders'
 import ActiveDeliveries from '@/components/vendor/active-deliveries'
