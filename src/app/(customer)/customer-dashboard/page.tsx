@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-
+import ActiveOrderTracker from '@/components/customer/active-order-tracker'
 export default async function CustomerDashboard() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -29,20 +29,7 @@ export default async function CustomerDashboard() {
         <p className="text-gray-700 text-sm font-medium">Thirsty? Let's get you some water.</p>
       </div>
 
-      {activeOrder && (
-        <div className="bg-white/80 backdrop-blur-md border border-white/50 shadow-xl rounded-2xl p-5">
-          <h2 className="font-bold text-gray-900 mb-3">Active Order</h2>
-          <p className="text-sm text-gray-800 font-medium mb-4">
-            {activeOrder.quantity_ordered} bags ordered
-          </p>
-          <div className="flex justify-between items-center relative">
-            <div className="absolute left-0 top-1/2 w-full h-1 bg-gray-200 -translate-y-1/2 rounded"></div>
-            <div className={`absolute left-0 top-1/2 h-1 bg-cyan-600 -translate-y-1/2 rounded transition-all ${
-              activeOrder.status === 'placed' ? 'w-0' : 
-              activeOrder.status === 'accepted' ? 'w-1/4' : 
-              activeOrder.status === 'preparing' ? 'w-1/2' : 
-              activeOrder.status === 'out_for_delivery' ? 'w-3/4' : 'w-full'
-            }`}></div>
+      <ActiveOrderTracker initialOrder={activeOrder} />
             
             <Step active icon="📝" label="Placed" />
             <Step active={['accepted', 'preparing', 'out_for_delivery', 'delivered'].includes(activeOrder.status)} icon="✅" label="Accepted" />
