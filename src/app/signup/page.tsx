@@ -15,15 +15,15 @@ export default async function SignupPage() {
     if (profile) redirect('/dashboard')
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-500 to-blue-700 p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+    return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-cyan-900 to-blue-900 p-4">
+      <div className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl p-8 w-full max-w-md animate-fade-in-up">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">AquaStorm</h1>
-          <p className="text-gray-500 mt-1">Fresh water, delivered fast.</p>
+          <div className="text-7xl mb-4 animate-float">💧</div>
+          <h1 className="text-3xl font-bold text-white">AquaStorm</h1>
+          <p className="text-cyan-200 mt-1">Fresh water, delivered fast.</p>
         </div>
         <SignupForm />
       </div>
     </div>
   )
-}
