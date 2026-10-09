@@ -8,6 +8,7 @@ export default function AutoRefresh({ interval = 3000 }: { interval?: number }) 
 
   useEffect(() => {
     const timer = setInterval(() => {
+      // Silently fetches new data from Supabase without flashing the screen
       router.refresh()
     }, interval)
 
