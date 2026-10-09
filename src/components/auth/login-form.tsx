@@ -8,7 +8,7 @@ export default function LoginForm() {
   const supabase = createClient()
   const router = useRouter()
 
-  const [email, setEmail] = useState('')
+  const [emailOrPhone, setEmailOrPhone] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -18,8 +18,16 @@ export default function LoginForm() {
     setError(null)
     setLoading(true)
 
+    // The Magic Trick: If they type a phone number (no '@'), add @aquastorm.app
+    let loginEmail = emailOrPhone.trim()
+    if (!loginEmail.includes('@')) {
+      // Remove any spaces from the phone number just in case
+      const cleanPhone = loginEmail.replace(/\s/g, '')
+      loginEmail = `${cleanPhone}@aquastorm.app`
+    }
+
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
+      email: loginEmail,
       password,
     })
 
@@ -40,10 +48,10 @@ export default function LoginForm() {
         <input
           type="text"
           required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={emailOrPhone}
+          onChange={(e) => setEmailOrPhone(e.target.value)}
           className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-cyan-200/50 focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm transition-all"
-          placeholder="you@example.com"
+          placeholder="0801 234 5678"
         />
       </div>
 
