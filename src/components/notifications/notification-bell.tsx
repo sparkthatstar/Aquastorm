@@ -5,12 +5,25 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
+// Helper function to convert VAPID key
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 export default function NotificationBell() {
   const supabase = createClient()
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<any[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [pushStatus, setPushStatus] = useState<string | null>(null)
 
   useEffect(() => {
     fetchNotifications()
@@ -58,30 +71,66 @@ export default function NotificationBell() {
   }
 
   async function subscribeToPush() {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      alert('Push notifications are not supported in this browser.')
-      return
-    }
-
-    const permission = await Notification.requestPermission()
-    if (permission !== 'granted') return
-
-    const sw = await navigator.serviceWorker.register('/sw.js')
+    setPushStatus('Requesting permission...')
     
-    const subscription = await sw.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-    })
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        alert('Push notifications are not supported in this browser.')
+        setPushStatus(null)
+        return
+      }
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+      // 1. Trigger the browser's native permission popup
+      const permission = await Notification.requestPermission()
+      if (permission !== 'granted') {
+        alert('You blocked notifications. Please enable them in your browser settings to receive pushes.')
+        setPushStatus(null)
+        return
+      }
 
-    await supabase.from('push_subscriptions').upsert({
-      user_id: user.id,
-      endpoint: subscription.endpoint,
-          p256dh: subscription.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(subscription.getKey('p256dh') as Buffer)))) : null,
-      auth: subscription.getKey('auth') ? btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(subscription.getKey('auth') as Buffer)))) : null
-    }, { onConflict: 'endpoint' })
+      setPushStatus('Registering service worker...')
+      // 2. Register the service worker
+      const sw = await navigator.serviceWorker.register('/sw.js')
+      
+      // 3. Convert the VAPID key
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      if (!vapidKey) {
+        alert('VAPID public key is missing from environment variables!')
+        setPushStatus(null)
+        return
+      }
+      const convertedKey = urlBase64ToUint8Array(vapidKey)
+
+      setPushStatus('Subscribing to push...')
+      // 4. Subscribe using the converted key
+      const subscription = await sw.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertedKey
+      })
+
+      // 5. Save to database
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        alert('User not logged in.')
+        setPushStatus(null)
+        return
+      }
+
+      await supabase.from('push_subscriptions').upsert({
+        user_id: user.id,
+        endpoint: subscription.endpoint,
+        p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')))),
+        auth: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth'))))
+      }, { onConflict: 'endpoint' })
+
+      setPushStatus('Enabled!')
+      alert('Push notifications enabled successfully!')
+      setPushStatus(null)
+    } catch (error) {
+      console.error('Push subscription error:', error)
+      alert('Failed to enable push: ' + error.message)
+      setPushStatus(null)
+    }
   }
 
   return (
@@ -103,7 +152,7 @@ export default function NotificationBell() {
           <div className="p-3 border-b border-gray-100 flex justify-between items-center">
             <h3 className="font-bold text-gray-900 text-sm">Notifications</h3>
             <button onClick={subscribeToPush} className="text-xs text-cyan-600 font-medium hover:underline">
-              Enable Push
+              {pushStatus ? pushStatus : 'Enable Push'}
             </button>
           </div>
           
