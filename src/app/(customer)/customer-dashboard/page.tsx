@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import ActiveOrderTracker from '@/components/customer/active-order-tracker'
+
 export default async function CustomerDashboard() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -30,18 +31,6 @@ export default async function CustomerDashboard() {
       </div>
 
       <ActiveOrderTracker initialOrder={activeOrder} />
-            
-            <Step active icon="📝" label="Placed" />
-            <Step active={['accepted', 'preparing', 'out_for_delivery', 'delivered'].includes(activeOrder.status)} icon="✅" label="Accepted" />
-            <Step active={['preparing', 'out_for_delivery', 'delivered'].includes(activeOrder.status)} icon="💧" label="Preparing" />
-            <Step active={['out_for_delivery', 'delivered'].includes(activeOrder.status)} icon="🚴" label="En route" />
-            <Step active={activeOrder.status === 'delivered'} icon="🏠" label="Delivered" />
-          </div>
-          <Link href={`/customer-orders/${activeOrder.id}`} className="block text-center mt-4 text-cyan-700 font-semibold text-sm hover:underline">
-            View Details
-          </Link>
-        </div>
-      )}
 
       <div className="bg-gradient-to-br from-cyan-600 to-blue-700 rounded-2xl shadow-xl p-6 text-center text-white animate-float">
         <div className="text-6xl mb-4">💧</div>
@@ -62,17 +51,6 @@ export default async function CustomerDashboard() {
           <span className="text-sm font-semibold text-gray-800">Settings</span>
         </Link>
       </div>
-    </div>
-  )
-}
-
-function Step({ active, icon, label }: { active: boolean; icon: string; label: string }) {
-  return (
-    <div className="relative z-10 flex flex-col items-center w-1/5">
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all ${active ? 'bg-cyan-600 scale-110' : 'bg-gray-300'}`}>
-        {icon}
-      </div>
-      <span className="text-[10px] text-gray-800 font-medium mt-1 text-center">{label}</span>
     </div>
   )
 }
