@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import NotificationBell from '@/components/notifications/notification-bell'
+import AutoRefresh from '@/components/ui/auto-refresh'
 
 export default async function VendorLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -15,10 +16,11 @@ export default async function VendorLayout({ children }: { children: React.React
     .single()
 
   if (!profile || !profile.is_active) redirect('/login')
-  if (profile.role !== 'vendor') redirect('/dashboard')
+  if (profile.role !== 'vendor') redirect('/')
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <AutoRefresh interval={3000} />
       <nav className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <span className="font-bold text-cyan-600 text-lg">AquaStorm Vendor</span>
