@@ -101,12 +101,15 @@ export default function NotificationBell() {
       }
       const convertedKey = urlBase64ToUint8Array(vapidKey)
 
+            // Clear any old subscriptions with the old key
+      const oldSubscription = await sw.pushManager.getSubscription()
+      if (oldSubscription) {
+        await oldSubscription.unsubscribe()
+      }
+
       setPushStatus('Subscribing to push...')
       // 4. Subscribe using the converted key
       const subscription = await sw.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: convertedKey
-      })
 
       // 5. Save to database
       const { data: { user } } = await supabase.auth.getUser()
