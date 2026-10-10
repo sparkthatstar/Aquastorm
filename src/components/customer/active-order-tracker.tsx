@@ -7,35 +7,42 @@ import Link from 'next/link'
 export default function ActiveOrderTracker({ initialOrder }: { initialOrder: any }) {
   const supabase = createClient()
   const [order, setOrder] = useState(initialOrder)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
-    // If there's no active order, don't subscribe
-    if (!order) return
+    if (!initialOrder) return
 
-    // Listen for changes to THIS specific order
-    const channel = supabase
-      .channel(`order-tracking:${order.id}`)
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${order.id}` },
-        (payload) => {
-          // When the vendor updates the status, update the UI instantly
-          setOrder(payload.new)
-        }
-      )
-      .subscribe()
+    const fetchLatestStatus = async () => {
+      setIsRefreshing(true)
+      
+      // Fetch the absolute latest status from the database
+      const { data } = await supabase
+        .from('orders')
+        .select('id, status, quantity_ordered')
+        .eq('id', initialOrder.id)
+        .single()
 
-    return () => {
-      supabase.removeChannel(channel)
+      if (data) {
+        setOrder(data)
+      }
+      
+      // Keep the wave shimmering for half a second to look nice
+      setTimeout(() => setIsRefreshing(false), 500)
     }
-  }, [order?.id])
 
-  // If no active order, render nothing
+    // Poll every 2 seconds
+    const timer = setInterval(fetchLatestStatus, 2000)
+
+    return () => clearInterval(timer)
+  }, [initialOrder])
+
   if (!order) return null
 
   return (
-    <div className="bg-white/80 backdrop-blur-md border border-white/50 shadow-xl rounded-2xl p-5">
-      <h2 className="font-bold text-gray-900 mb-3">Active Order</h2>
+    <div className={`bg-white/80 backdrop-blur-md border border-white/50 shadow-xl rounded-2xl p-5 transition-all ${isRefreshing ? 'glassy-wave' : ''}`}>
+      <div className="flex justify-between items-center mb-3">
+        <h2 className="font-bold text-gray-900">Active Order</h2>
+      </div>
       <p className="text-sm text-gray-800 font-medium mb-4">
         {order.quantity_ordered} bags ordered
       </p>
