@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import OrderChat from '@/components/chat/order-chat'
+
 import RatingSystem from '@/components/orders/rating-system'
 import Link from 'next/link'
 
@@ -62,12 +62,7 @@ export default async function CustomerOrderDetail({ params }: { params: { id: st
         )}
       </div>
 
-      {conversation && order.vendor ? (
-        <OrderChat 
-          conversationId={conversation.id}
-          currentUserId={user.id}
-          recipientName={order.vendor.full_name}
-          initialStatus={conversation.status}
+     
         />
       ) : (
         <div className="bg-white rounded-xl shadow-sm border border-dashed border-gray-300 p-6 text-center text-gray-500 text-sm">
