@@ -12,28 +12,24 @@ export default function ActiveOrderTracker({ initialOrder }: { initialOrder: any
   useEffect(() => {
     if (!initialOrder) return
 
-    const fetchLatestStatus = async () => {
-      setIsRefreshing(true)
-      
-      // Fetch the absolute latest status from the database
-      const { data } = await supabase
-        .from('orders')
-        .select('id, status, quantity_ordered')
-        .eq('id', initialOrder.id)
-        .single()
+    // Listen for instant database updates only (No timers!)
+    const channel = supabase
+      .channel(`order-tracking:${initialOrder.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${initialOrder.id}` },
+        (payload) => {
+          // When the vendor updates the order, update the UI and shimmer
+          setOrder(payload.new)
+          setIsRefreshing(true)
+          setTimeout(() => setIsRefreshing(false), 600)
+        }
+      )
+      .subscribe()
 
-      if (data) {
-        setOrder(data)
-      }
-      
-      // Keep the wave shimmering for half a second to look nice
-      setTimeout(() => setIsRefreshing(false), 500)
+    return () => {
+      supabase.removeChannel(channel)
     }
-
-    // Poll every 2 seconds
-    const timer = setInterval(fetchLatestStatus, 2000)
-
-    return () => clearInterval(timer)
   }, [initialOrder])
 
   if (!order) return null
