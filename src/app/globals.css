@@ -74,12 +74,15 @@ animation: float 3s ease-in-out infinite;
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
+  width: 50%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  transform: translateX(-150%);
   animation: shimmer 1.5s infinite;
+  z-index: 50;
+  pointer-events: none;
 }
 @keyframes shimmer {
-  100% { transform: translateX(100%); }
+  0% { transform: translateX(-150%); }
+  100% { transform: translateX(300%); }
 }
