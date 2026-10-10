@@ -123,15 +123,23 @@ export default function NotificationBell() {
         auth: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth'))))
       }, { onConflict: 'endpoint' })
 
+           const { error: upsertError } = await supabase.from('push_subscriptions').upsert({
+        user_id: user.id,
+        endpoint: subscription.endpoint,
+        p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')))),
+        auth: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth'))))
+      }, { onConflict: 'endpoint' })
+
+      if (upsertError) {
+        alert('Failed to save push subscription: ' + upsertError.message)
+        setPushStatus(null)
+        return
+      }
+
       setPushStatus('Enabled!')
       alert('Push notifications enabled successfully!')
       setPushStatus(null)
-    } catch (error) {
-      console.error('Push subscription error:', error)
-      alert('Failed to enable push: ' + error.message)
-      setPushStatus(null)
-    }
-  }
+    
 
   return (
     <div className="relative">
