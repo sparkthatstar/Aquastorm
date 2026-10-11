@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import NotificationBell from '@/components/notifications/notification-bell'
 import AutoRefresh from '@/components/ui/auto-refresh'
+import FloatingChatManager from '@/components/chat/floating-chat-manager'
 
 export default async function CustomerLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -32,7 +33,10 @@ export default async function CustomerLayout({ children }: { children: React.Rea
           </div>
         </div>
       </nav>
-      <main className="max-w-2xl mx-auto px-4 py-6">{children}</main>
+      <main className="max-w-2xl mx-auto px-4 py-6">
+        {children}
+        <FloatingChatManager userId={user.id} />
+      </main>
     </div>
   )
 }
