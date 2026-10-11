@@ -57,8 +57,8 @@ export default function ActiveOrderTracker({ initialOrder }: { initialOrder: any
         <Step active={['out_for_delivery', 'delivered'].includes(order.status)} icon="🚴" label="En route" />
         <Step active={order.status === 'delivered'} icon="🏠" label="Delivered" />
       </div>
-      <Link href={`/customer-orders/active` className="block text-center mt-4 text-cyan-700 font-semibold text-sm hover:underline">
-        View Details
+      <Link href="/customer-orders/active" className="block text-center mt-4 text-cyan-700 font-semibold text-sm hover:underline">
+        see more..
       </Link>
     </div>
   )
