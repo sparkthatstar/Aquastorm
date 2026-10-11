@@ -8,6 +8,7 @@ export default async function ActiveOrdersPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // Fetch ALL active orders for this customer
   const { data: activeOrders } = await supabase
     .from('orders')
     .select(`
