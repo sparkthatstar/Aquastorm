@@ -13,6 +13,7 @@ export default function SignupForm() {
   const [phone, setPhone] = useState('')
   const [phoneConfirm, setPhoneConfirm] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -57,7 +58,9 @@ export default function SignupForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-cyan-100 mb-1">Full Name</label>
+        <label className="block text-sm font-medium text-cyan-100 mb-1">
+          Full Name
+        </label>
         <input
           type="text"
           required
@@ -69,7 +72,9 @@ export default function SignupForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-cyan-100 mb-1">Room Number</label>
+        <label className="block text-sm font-medium text-cyan-100 mb-1">
+          Room Number
+        </label>
         <input
           type="text"
           required
@@ -81,7 +86,9 @@ export default function SignupForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-cyan-100 mb-1">Phone / WhatsApp Number</label>
+        <label className="block text-sm font-medium text-cyan-100 mb-1">
+          Phone / WhatsApp Number
+        </label>
         <input
           type="tel"
           required
@@ -93,7 +100,9 @@ export default function SignupForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-cyan-100 mb-1">Repeat Phone Number</label>
+        <label className="block text-sm font-medium text-cyan-100 mb-1">
+          Repeat Phone Number
+        </label>
         <input
           type="tel"
           required
@@ -105,18 +114,73 @@ export default function SignupForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-cyan-100 mb-1">Password</label>
-        <input
-          type="password"
-          required
-          minLength={6}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-cyan-200/50 focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm transition-all"
-        />
+        <label className="block text-sm font-medium text-cyan-100 mb-1">
+          Password
+        </label>
+
+        <div className="relative">
+          <input
+            type={showPassword ? 'text' : 'password'}
+            required
+            minLength={6}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-3 pr-12 rounded-xl bg-white/10 border border-white/20 text-white placeholder-cyan-200/50 focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm transition-all"
+          />
+
+          <button
+            type="button"
+            onClick={() => setShowPassword((current) => !current)}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            aria-pressed={showPassword}
+            className="absolute inset-y-0 right-0 flex items-center justify-center px-4 text-cyan-200 hover:text-white transition-colors"
+          >
+            {showPassword ? (
+              // Eye with a slash: password is visible
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M3 3l18 18" />
+                <path d="M10.6 10.6a2 2 0 002.8 2.8" />
+                <path d="M9.9 5.2A10.8 10.8 0 0112 5c5 0 8.3 4.5 9 7a11.8 11.8 0 01-3 4.5" />
+                <path d="M6.2 6.2A12.2 12.2 0 003 12c.7 2.5 4 7 9 7a10.7 10.7 0 004.1-.8" />
+              </svg>
+            ) : (
+              // Open eye: password is hidden
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
 
-      {error && <div className="bg-red-500/20 border border-red-400/50 text-red-200 text-sm rounded-lg p-3 backdrop-blur-sm">{error}</div>}
+      {error && (
+        <div className="bg-red-500/20 border border-red-400/50 text-red-200 text-sm rounded-lg p-3 backdrop-blur-sm">
+          {error}
+        </div>
+      )}
 
       <button
         type="submit"
@@ -128,7 +192,12 @@ export default function SignupForm() {
 
       <p className="text-center text-sm text-cyan-200 mt-2">
         Already have an account?{' '}
-        <a href="/login" className="text-white font-medium hover:underline">Log in</a>
+        <a
+          href="/login"
+          className="text-white font-medium hover:underline"
+        >
+          Log in
+        </a>
       </p>
     </form>
   )
