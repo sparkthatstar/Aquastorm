@@ -30,7 +30,7 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
           </div>
         </div>
       </nav>
-      <main className="max-w-7xl mx-auto px-4 py-6">{children}</main>
+      <main className="owner-dashboard max-w-7xl mx-auto px-4 py-6 text-gray-900">{children}</main>
     </div>
   )
 }
