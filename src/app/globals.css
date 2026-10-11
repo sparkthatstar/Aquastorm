@@ -86,3 +86,68 @@ animation: float 3s ease-in-out infinite;
   0% { transform: translateX(-150%); }
   100% { transform: translateX(300%); }
 }
+
+/* =========================================
+   AQUASTORM OWNER DASHBOARD TEXT VISIBILITY
+   ========================================= */
+
+/* Make gray text darker throughout the Owner Dashboard */
+.owner-dashboard .text-gray-400,
+.owner-dashboard .text-gray-500,
+.owner-dashboard .text-gray-600 {
+  color: #1f2937 !important;
+}
+
+/* Strengthen already-dark gray text */
+.owner-dashboard .text-gray-700 {
+  color: #111827 !important;
+}
+
+/* Make dashboard headings clearly visible */
+.owner-dashboard h1,
+.owner-dashboard h2,
+.owner-dashboard h3,
+.owner-dashboard h4,
+.owner-dashboard h5,
+.owner-dashboard h6 {
+  color: #111827;
+  font-weight: 700;
+}
+
+/* Make table headings and table content readable */
+.owner-dashboard th {
+  color: #111827 !important;
+  font-weight: 700;
+}
+
+.owner-dashboard td {
+  color: #1f2937;
+}
+
+/* Make form labels easier to read */
+.owner-dashboard label {
+  color: #111827;
+  font-weight: 600;
+}
+
+/* Make placeholder text darker */
+.owner-dashboard input::placeholder,
+.owner-dashboard textarea::placeholder {
+  color: #4b5563;
+  opacity: 1;
+}
+
+/* Make input text readable */
+.owner-dashboard input,
+.owner-dashboard textarea,
+.owner-dashboard select {
+  color: #111827;
+}
+
+/* Keep disabled text visible */
+.owner-dashboard input:disabled,
+.owner-dashboard textarea:disabled,
+.owner-dashboard select:disabled {
+  color: #374151;
+  opacity: 1;
+}
