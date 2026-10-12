@@ -10,27 +10,24 @@ export default function FloatingChatManager({ userId }: { userId: string }) {
   const [groups, setGroups] = useState<any[]>([])
 
   async function fetchChats() {
-    // 1. Fetch all conversations for this user
     const { data } = await supabase
       .from('conversations')
       .select(`
         id, order_id, customer_id, vendor_id,
         customer:profiles!conversations_customer_id_fkey(full_name),
         vendor:profiles!conversations_vendor_id_fkey(full_name),
-        orders:orders(status)
+        order:orders(status)
       `)
       .or(`customer_id.eq.${userId},vendor_id.eq.${userId}`)
 
     if (!data) return
 
-    // 2. Filter locally: ONLY keep conversations where the order is actively in progress
     const activeStatuses = ['accepted', 'preparing', 'out_for_delivery']
     const activeConversations = data.filter(c => {
-      const orderStatus = Array.isArray(c.orders) ? c.orders[0]?.status : c.orders?.status
+      const orderStatus = Array.isArray(c.order) ? c.order[0]?.status : c.order?.status
       return activeStatuses.includes(orderStatus)
     })
 
-    // 3. Group them so we only get one icon per person
     const grouped: Record<string, any> = {}
     activeConversations.forEach(c => {
       const isCustomer = c.customer_id === userId
@@ -50,16 +47,23 @@ export default function FloatingChatManager({ userId }: { userId: string }) {
   useEffect(() => {
     fetchChats()
 
-    // 3. Listen for realtime updates to order statuses
+    // 1. Listen for instant realtime updates
     const channel = supabase
       .channel('order-status-changes')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, () => {
-        // When an order changes (e.g., delivered/cancelled), refetch chats
         fetchChats()
       })
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    // 2. Safe fallback: check every 5 seconds in case the realtime event misses
+    const timer = setInterval(() => {
+      fetchChats()
+    }, 5000)
+
+    return () => { 
+      supabase.removeChannel(channel)
+      clearInterval(timer)
+    }
   }, [userId])
 
   return (
