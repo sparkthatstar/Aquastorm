@@ -132,10 +132,7 @@ export default async function OwnerDashboard() {
           <VendorApprovals requests={removalRequests || []} />
         </div>
 
-        <div>
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Create Manager</h2>
-          <ManagerManagement />
-        </div>
+
       </div>
 
       <div>
