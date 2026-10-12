@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import ManagerManagement from '@/components/owner/manager-management'
+
 import VendorApprovals from '@/components/owner/vendor-approvals'
 import AuditLogViewer from '@/components/owner/audit-log-viewer'
 import PaymentOversight from '@/components/owner/payment-oversight'
