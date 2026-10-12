@@ -96,7 +96,6 @@ export default async function OwnerDashboard() {
     .in('status', ['processing', 'manager_validated'])
     .order('requested_at', { ascending: false })
 
-  // Fetch Customer Complaints
   const { data: complaints } = await supabase
     .from('complaints')
     .select(`
@@ -144,7 +143,6 @@ export default async function OwnerDashboard() {
         <PaymentOversight payments={paymentsToReview || []} />
       </div>
 
-      {/* CUSTOMER COMPLAINTS SECTION */}
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Customer Support / Complaints</h2>
         <ComplaintsManager complaints={complaints || []} />
