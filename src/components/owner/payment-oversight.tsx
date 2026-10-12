@@ -50,4 +50,25 @@ export default function PaymentOversight({ payments }: { payments: any[] }) {
       {/* Clear History Button */}
       <div className="flex justify-end">
         <button 
-          onClick={handle
+          onClick={handleClearHistory}
+          disabled={clearing}
+          className="mb-4 bg-gray-100 text-gray-700 text-xs font-semibold py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+        >
+          {clearing ? 'Clearing...' : 'Clear Old History'}
+        </button>
+      </div>
+
+      {/* Receipt Viewer Modal */}
+      {receiptUrl && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setReceiptUrl(null)}>
+          <div className="bg-white p-2 rounded-xl max-w-md w-full">
+            <img src={receiptUrl} alt="Receipt" className="rounded-lg w-full h-auto" />
+            <p className="text-center text-xs text-gray-500 mt-2">Click anywhere to close</p>
+          </div>
+        </div>
+      )}
+
+      {payments.length === 0 ? (
+        <div className="bg-white border border-dashed border-gray-300 rounded-xl p-6 text-center text-gray-500 text-sm">No payments require review.</div>
+      ) : (
+        payments.map((payment
