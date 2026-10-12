@@ -9,12 +9,13 @@ import CashoutApproval from '@/components/staff/cashout-approval'
 import AnalyticsDashboard from '@/components/staff/analytics-dashboard'
 import StaffOrders from '@/components/staff/staff-orders'
 import StaffInventory from '@/components/staff/staff-inventory'
+import DangerZone from '@/components/owner/danger-zone'
 
 export default async function OwnerDashboard() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-    const { data: removalRequests } = await supabase
+  const { data: removalRequests } = await supabase
     .from('manager_action_requests')
     .select(`
       id, metadata, created_at,
@@ -67,7 +68,7 @@ export default async function OwnerDashboard() {
     .order('created_at', { ascending: false })
     .limit(10)
 
- const { data: vendors } = await supabase
+  const { data: vendors } = await supabase
     .from('vendors')
     .select('profile_id, is_approved')
     .eq('is_approved', true)
@@ -143,14 +144,20 @@ export default async function OwnerDashboard() {
         </div>
       </div>
 
-              <div>
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Vendor Inventory</h2>
-          <StaffInventory vendors={vendors || []} />
-        </div>
+      <div>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Vendor Inventory</h2>
+        <StaffInventory vendors={vendors || []} />
+      </div>
 
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-4">System Audit Log</h2>
         <AuditLogViewer logs={auditLogs || []} />
+      </div>
+
+      {/* DANGER ZONE ADDED HERE */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">System Controls</h2>
+        <DangerZone />
       </div>
     </div>
   )
