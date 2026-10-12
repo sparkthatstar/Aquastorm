@@ -98,14 +98,21 @@ export default function FloatingChatIcon({ name, conversationId, userId, index }
     setNewMessage('')
   }
 
-  const handleIconClick = () => {
+   const handleIconClick = () => {
     // Only open/close if we didn't just drag it
     if (!movedRef.current) {
+      // If we are about to open it, move it to the center of the screen
+      if (!isOpen) {
+        const chatWidth = 320 // w-80
+        const chatHeight = 384 // h-96
+        const centerX = (window.innerWidth / 2) - (chatWidth / 2)
+        const centerY = (window.innerHeight / 2) - (chatHeight / 2)
+        setPos({ x: centerX, y: centerY })
+        setHasUnread(false)
+      }
       setIsOpen(!isOpen)
-      if (!isOpen) setHasUnread(false)
     }
   }
-
   return (
     <div
       className="absolute pointer-events-auto"
