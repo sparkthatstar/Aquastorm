@@ -1,4 +1,3 @@
-export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import ActiveOrderTracker from '@/components/customer/active-order-tracker'
@@ -42,14 +41,18 @@ export default async function CustomerDashboard() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <Link href="/customer-orders/history" className="bg-white/80 backdrop-blur-md rounded-xl shadow-md p-4 flex flex-col items-center justify-center border border-white/50 hover:border-cyan-300 transition-all">
           <span className="text-2xl mb-1">📜</span>
-          <span className="text-sm font-semibold text-gray-800">History</span>
+          <span className="text-xs font-semibold text-gray-800">History</span>
+        </Link>
+        <Link href="/support" className="bg-white/80 backdrop-blur-md rounded-xl shadow-md p-4 flex flex-col items-center justify-center border border-white/50 hover:border-cyan-300 transition-all">
+          <span className="text-2xl mb-1">🛟</span>
+          <span className="text-xs font-semibold text-gray-800">Support</span>
         </Link>
         <Link href="/settings" className="bg-white/80 backdrop-blur-md rounded-xl shadow-md p-4 flex flex-col items-center justify-center border border-white/50 hover:border-cyan-300 transition-all">
           <span className="text-2xl mb-1">⚙️</span>
-          <span className="text-sm font-semibold text-gray-800">Settings</span>
+          <span className="text-xs font-semibold text-gray-800">Settings</span>
         </Link>
       </div>
     </div>
