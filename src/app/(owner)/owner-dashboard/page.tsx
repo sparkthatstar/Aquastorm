@@ -9,7 +9,7 @@ import CashoutApproval from '@/components/staff/cashout-approval'
 import AnalyticsDashboard from '@/components/staff/analytics-dashboard'
 import StaffOrders from '@/components/staff/staff-orders'
 import StaffInventory from '@/components/staff/staff-inventory'
-import ComplaintsManager from '@/components/staff/complaints-manager'
+import ComplaintsManager from '@/components/staff/complaints-manager' // <-- ADDED IMPORT
 import DangerZone from '@/components/owner/danger-zone'
 
 export const dynamic = 'force-dynamic'
@@ -99,78 +99,6 @@ export default async function OwnerDashboard() {
   const { data: complaints } = await supabase
     .from('complaints')
     .select(`
-      id, category, description, status, resolution, created_at,
+      id, category, description, status, resolution, created_at, owner_reply, replied_at, // <-- ADDED owner_reply, replied_at
       customer:profiles!complaints_customer_id_fkey ( full_name )
-    `)
-    .order('created_at', { ascending: false })
-
-  return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Owner Dashboard</h1>
-        <p className="text-gray-500 text-sm">System governance and oversight.</p>
-      </div>
-
-      <div>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Business Analytics</h2>
-        <AnalyticsDashboard stats={stats} />
-      </div>
-
-      <div>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Cashout Approvals</h2>
-        <CashoutApproval requests={cashoutRequests || []} userRole="owner" />
-      </div>
-
-      <div>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Recent Orders & Dispatch</h2>
-        <StaffOrders orders={orders || []} vendors={allUsers || []} canAssign={true} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Pending Vendor Removals</h2>
-          <VendorApprovals requests={removalRequests || []} />
-        </div>
-
-
-      </div>
-
-      <div>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Payment & Receipt Oversight</h2>
-        <PaymentOversight payments={paymentsToReview || []} />
-      </div>
-
-      <div>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Customer Support / Complaints</h2>
-        <ComplaintsManager complaints={complaints || []} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">User Role Management</h2>
-          <UserManagement users={allUsers || []} />
-        </div>
-
-        <div>
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Manager Permissions</h2>
-          <ManagerPermissions managers={managers || []} />
-        </div>
-      </div>
-
-      <div>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Vendor Inventory</h2>
-        <StaffInventory vendors={vendors || []} />
-      </div>
-
-      <div>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">System Audit Log</h2>
-        <AuditLogViewer logs={auditLogs || []} />
-      </div>
-
-      <div>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">System Controls</h2>
-        <DangerZone />
-      </div>
-    </div>
-  )
-}
+    
