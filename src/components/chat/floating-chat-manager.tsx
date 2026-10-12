@@ -9,55 +9,8 @@ export default function FloatingChatManager({ userId }: { userId: string }) {
   const supabase = createClient()
   const [groups, setGroups] = useState<any[]>([])
 
-  useEffect(() => {
-    async function fetchChats() {
-      const { data } = await supabase
-        .from('conversations')
-        .select(`
-          id, order_id, customer_id, vendor_id,
-          customer:profiles!conversations_customer_id_fkey(full_name),
-          vendor:profiles!conversations_vendor_id_fkey(full_name),
-          orders:orders(status)
-        `)
-        .or(`customer_id.eq.${userId},vendor_id.eq.${userId}`)
-        // ONLY show chats for active orders!
-        .in('orders.status', ['accepted', 'preparing', 'out_for_delivery'])
-
-      if (!data) return
-
-      const grouped: Record<string, any> = {}
-      data.forEach(c => {
-        const isCustomer = c.customer_id === userId
-        const otherId = isCustomer ? c.vendor_id : c.customer_id
-        const vendorName = Array.isArray(c.vendor) ? c.vendor[0]?.full_name : c.vendor?.full_name
-        const customerName = Array.isArray(c.customer) ? c.customer[0]?.full_name : c.customer?.full_name
-        const otherName = isCustomer ? vendorName : customerName
-
-        if (!grouped[otherId]) {
-          grouped[otherId] = { otherId, name: otherName || 'User', conversationId: c.id }
-        }
-      })
-
-      setGroups(Object.values(grouped))
-    }
-    fetchChats()
-  }, [userId])
-
-  // Also listen for realtime updates so the icon disappears instantly when delivered
-  useEffect(() => {
-    const channel = supabase
-      .channel('order-status-changes')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, () => {
-        // Refetch chats when an order status changes
-        fetchChats()
-      })
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
-  }, [])
-
-  // Helper to refetch (needs to be accessible in the useEffect above)
   async function fetchChats() {
+    // 1. Fetch all conversations for this user
     const { data } = await supabase
       .from('conversations')
       .select(`
@@ -67,22 +20,47 @@ export default function FloatingChatManager({ userId }: { userId: string }) {
         orders:orders(status)
       `)
       .or(`customer_id.eq.${userId},vendor_id.eq.${userId}`)
-      .in('orders.status', ['accepted', 'preparing', 'out_for_delivery'])
 
     if (!data) return
+
+    // 2. Filter locally: ONLY keep conversations where the order is actively in progress
+    const activeStatuses = ['accepted', 'preparing', 'out_for_delivery']
+    const activeConversations = data.filter(c => {
+      const orderStatus = Array.isArray(c.orders) ? c.orders[0]?.status : c.orders?.status
+      return activeStatuses.includes(orderStatus)
+    })
+
+    // 3. Group them so we only get one icon per person
     const grouped: Record<string, any> = {}
-    data.forEach(c => {
+    activeConversations.forEach(c => {
       const isCustomer = c.customer_id === userId
       const otherId = isCustomer ? c.vendor_id : c.customer_id
       const vendorName = Array.isArray(c.vendor) ? c.vendor[0]?.full_name : c.vendor?.full_name
       const customerName = Array.isArray(c.customer) ? c.customer[0]?.full_name : c.customer?.full_name
       const otherName = isCustomer ? vendorName : customerName
+
       if (!grouped[otherId]) {
         grouped[otherId] = { otherId, name: otherName || 'User', conversationId: c.id }
       }
     })
+
     setGroups(Object.values(grouped))
   }
+
+  useEffect(() => {
+    fetchChats()
+
+    // 3. Listen for realtime updates to order statuses
+    const channel = supabase
+      .channel('order-status-changes')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, () => {
+        // When an order changes (e.g., delivered/cancelled), refetch chats
+        fetchChats()
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [userId])
 
   return (
     <div className="fixed inset-0 pointer-events-none z-[100]">
