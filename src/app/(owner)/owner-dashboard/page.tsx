@@ -9,7 +9,10 @@ import CashoutApproval from '@/components/staff/cashout-approval'
 import AnalyticsDashboard from '@/components/staff/analytics-dashboard'
 import StaffOrders from '@/components/staff/staff-orders'
 import StaffInventory from '@/components/staff/staff-inventory'
+import ComplaintsManager from '@/components/staff/complaints-manager'
 import DangerZone from '@/components/owner/danger-zone'
+
+export const dynamic = 'force-dynamic'
 
 export default async function OwnerDashboard() {
   const supabase = await createClient()
@@ -93,6 +96,15 @@ export default async function OwnerDashboard() {
     .in('status', ['processing', 'manager_validated'])
     .order('requested_at', { ascending: false })
 
+  // Fetch Customer Complaints
+  const { data: complaints } = await supabase
+    .from('complaints')
+    .select(`
+      id, category, description, status, resolution, created_at,
+      customer:profiles!complaints_customer_id_fkey ( full_name )
+    `)
+    .order('created_at', { ascending: false })
+
   return (
     <div className="space-y-8">
       <div>
@@ -132,6 +144,12 @@ export default async function OwnerDashboard() {
         <PaymentOversight payments={paymentsToReview || []} />
       </div>
 
+      {/* CUSTOMER COMPLAINTS SECTION */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Customer Support / Complaints</h2>
+        <ComplaintsManager complaints={complaints || []} />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
           <h2 className="text-lg font-semibold text-gray-800 mb-4">User Role Management</h2>
@@ -154,7 +172,6 @@ export default async function OwnerDashboard() {
         <AuditLogViewer logs={auditLogs || []} />
       </div>
 
-      {/* DANGER ZONE ADDED HERE */}
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-4">System Controls</h2>
         <DangerZone />
