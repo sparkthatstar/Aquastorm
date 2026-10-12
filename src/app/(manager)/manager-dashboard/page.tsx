@@ -3,6 +3,9 @@ import StaffOrders from '@/components/staff/staff-orders'
 import StaffInventory from '@/components/staff/staff-inventory'
 import CashoutApproval from '@/components/staff/cashout-approval'
 import AnalyticsDashboard from '@/components/staff/analytics-dashboard'
+import ComplaintsManager from '@/components/staff/complaints-manager'
+
+export const dynamic = 'force-dynamic'
 
 export default async function ManagerDashboard() {
   const supabase = await createClient()
@@ -34,12 +37,12 @@ export default async function ManagerDashboard() {
     .order('created_at', { ascending: false })
     .limit(10)
 
-      const { data: vendors } = await supabase
+  const { data: vendors } = await supabase
     .from('vendors')
     .select(`
-      profile_id, 
-      is_approved, 
-      profile:profiles!vendors_profile_id_fkey ( id, full_name )
+      is_approved, aggregate_rating,
+      profile:profiles!vendors_profile_id_fkey ( id, full_name ),
+      inventory:inventory!inventory_vendor_id_fkey ( available, reserved, delivered )
     `)
     .eq('is_approved', true)
 
@@ -63,6 +66,15 @@ export default async function ManagerDashboard() {
     .in('status', ['processing', 'manager_validated'])
     .order('requested_at', { ascending: false })
 
+  // Fetch Customer Complaints
+  const { data: complaints } = await supabase
+    .from('complaints')
+    .select(`
+      id, category, description, status, resolution, created_at,
+      customer:profiles!complaints_customer_id_fkey ( full_name )
+    `)
+    .order('created_at', { ascending: false })
+
   return (
     <div className="space-y-8">
       <div>
@@ -78,6 +90,12 @@ export default async function ManagerDashboard() {
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Recent Orders & Dispatch</h2>
         <StaffOrders orders={orders || []} vendors={vendors?.map(v => v.profile).filter(Boolean) || []} canAssign={canAssign} />
+      </div>
+
+      {/* CUSTOMER COMPLAINTS SECTION */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Customer Support / Complaints</h2>
+        <ComplaintsManager complaints={complaints || []} />
       </div>
 
       <div>
