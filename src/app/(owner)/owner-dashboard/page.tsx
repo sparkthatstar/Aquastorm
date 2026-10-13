@@ -8,8 +8,8 @@ import ManagerPermissions from '@/components/owner/manager-permissions'
 import CashoutApproval from '@/components/staff/cashout-approval'
 import AnalyticsDashboard from '@/components/staff/analytics-dashboard'
 import StaffOrders from '@/components/staff/staff-orders'
-import StaffInventory from '@/components/staff/staff-inventory'
 import ComplaintsManager from '@/components/staff/complaints-manager'
+import AquaLedger from '@/components/owner/aqua-ledger'
 import DangerZone from '@/components/owner/danger-zone'
 
 export const dynamic = 'force-dynamic'
@@ -71,10 +71,31 @@ export default async function OwnerDashboard() {
     .order('created_at', { ascending: false })
     .limit(10)
 
-  const { data: vendors } = await supabase
+  // Fetch Vendors with their inventory
+  const { data: vendorsRaw } = await supabase
     .from('vendors')
-    .select('profile_id, is_approved')
+    .select(`
+      profile_id, is_approved,
+      profile:profiles!vendors_profile_id_fkey ( full_name ),
+      inventory:inventory!inventory_vendor_id_fkey ( available, reserved, delivered )
+    `)
     .eq('is_approved', true)
+
+  const vendors = (vendorsRaw || []).map(v => ({
+    profile_id: v.profile_id,
+    name: Array.isArray(v.profile) ? v.profile[0]?.full_name : v.profile?.full_name || 'Unknown',
+    available: Array.isArray(v.inventory) ? v.inventory[0]?.available || 0 : v.inventory?.available || 0,
+    reserved: Array.isArray(v.inventory) ? v.inventory[0]?.reserved || 0 : v.inventory?.reserved || 0,
+  }))
+
+  // Fetch Aqua Store total stock
+  const { data: storeData } = await supabase
+    .from('aqua_store')
+    .select('total_stock')
+    .limit(1)
+    .single()
+  
+  const storeStock = storeData?.total_stock || 0
 
   const { count: totalOrders } = await supabase.from('orders').select('*', { count: 'exact', head: true })
   const { count: activeDeliveries } = await supabase.from('orders').select('*', { count: 'exact', head: true }).in('status', ['accepted', 'preparing', 'out_for_delivery'])
@@ -116,6 +137,12 @@ export default async function OwnerDashboard() {
         <AnalyticsDashboard stats={stats} />
       </div>
 
+      {/* AQUA LEDGER & STORE (Replaces old inventory) */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Aqua Ledger & Store Control</h2>
+        <AquaLedger vendors={vendors} storeStock={storeStock} />
+      </div>
+
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Cashout Approvals</h2>
         <CashoutApproval requests={cashoutRequests || []} userRole="owner" />
@@ -131,8 +158,6 @@ export default async function OwnerDashboard() {
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Pending Vendor Removals</h2>
           <VendorApprovals requests={removalRequests || []} />
         </div>
-
-
       </div>
 
       <div>
@@ -155,11 +180,6 @@ export default async function OwnerDashboard() {
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Manager Permissions</h2>
           <ManagerPermissions managers={managers || []} />
         </div>
-      </div>
-
-      <div>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Vendor Inventory</h2>
-        <StaffInventory vendors={vendors || []} />
       </div>
 
       <div>
