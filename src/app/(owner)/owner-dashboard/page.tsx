@@ -81,7 +81,7 @@ export default async function OwnerDashboard() {
     `)
     .eq('is_approved', true)
 
-  const vendors = (vendorsRaw || []).map(v => ({
+  const vendors = ((vendorsRaw as any[]) || []).map(v => ({
     profile_id: v.profile_id,
     name: Array.isArray(v.profile) ? v.profile[0]?.full_name : v.profile?.full_name || 'Unknown',
     available: Array.isArray(v.inventory) ? v.inventory[0]?.available || 0 : v.inventory?.available || 0,
