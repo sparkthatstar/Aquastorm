@@ -14,11 +14,8 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  // Inventory state
-  const [transferVendor, setTransferVendor] = useState('')
-  const [transferQty, setTransferQty] = useState(0)
-  const [unstockVendor, setUnstockVendor] = useState('')
-  const [unstockQty, setUnstockQty] = useState(0)
+  // Inventory inline state
+  const [stockInputs, setStockInputs] = useState<Record<string, string>>({})
 
   // Form state
   const today = new Date().toISOString().split('T')[0]
@@ -29,6 +26,10 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
   const [quantity, setQuantity] = useState(0)
   const [amount, setAmount] = useState(0)
   const [isStockPurchase, setIsStockPurchase] = useState(false)
+
+  // Calculate Total Stock Value (Central + All Vendors)
+  const totalVendorStock = vendors.reduce((sum, v) => sum + (Number(v.available) || 0) + (Number(v.reserved) || 0), 0)
+  const totalStockValue = Number(storeStock) + totalVendorStock
 
   async function fetchData() {
     const { data: ledgerData } = await supabase
@@ -76,39 +77,37 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
     setLoading(false)
   }
 
-  async function handleTransfer() {
-    if (!transferVendor) return alert('Select a vendor')
-    if (transferQty <= 0) return alert('Quantity must be greater than 0')
+  async function handleAddStock(vendorId: string) {
+    const qty = parseInt(stockInputs[vendorId] || '0')
+    if (qty <= 0) return alert('Please enter a valid quantity.')
 
     setLoading(true)
     const { error } = await supabase.rpc('transfer_stock_to_vendor', {
-      p_vendor_id: transferVendor,
-      p_quantity: Number(transferQty)
+      p_vendor_id: vendorId,
+      p_quantity: qty
     })
 
     if (error) alert('Error: ' + error.message)
     else {
-      setTransferVendor('')
-      setTransferQty(0)
+      setStockInputs({ ...stockInputs, [vendorId]: '' })
       router.refresh()
     }
     setLoading(false)
   }
 
-  async function handleUnstock() {
-    if (!unstockVendor) return alert('Select a vendor')
-    if (unstockQty <= 0) return alert('Quantity must be greater than 0')
+  async function handleRemoveStock(vendorId: string) {
+    const qty = parseInt(stockInputs[vendorId] || '0')
+    if (qty <= 0) return alert('Please enter a valid quantity.')
 
     setLoading(true)
     const { error } = await supabase.rpc('unstock_vendor', {
-      p_vendor_id: unstockVendor,
-      p_quantity: Number(unstockQty)
+      p_vendor_id: vendorId,
+      p_quantity: qty
     })
 
     if (error) alert('Error: ' + error.message)
     else {
-      setUnstockVendor('')
-      setUnstockQty(0)
+      setStockInputs({ ...stockInputs, [vendorId]: '' })
       router.refresh()
     }
     setLoading(false)
@@ -185,91 +184,73 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
 
       {/* === INVENTORY MANAGEMENT === */}
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
           <h2 className="text-xl font-bold text-gray-900">Warehouse & Vendor Inventory</h2>
-          <div className="bg-cyan-50 px-4 py-2 rounded-full">
-            <span className="text-sm font-medium text-cyan-700">Aqua Store (Central): </span>
-            <span className="text-lg font-bold text-cyan-900">{storeStock} bags</span>
+          <div className="flex gap-6 items-center">
+            <div className="text-right">
+              <p className="text-xs text-gray-500 uppercase font-medium">Central Store</p>
+              <p className="text-xl font-bold text-cyan-700">{storeStock} bags</p>
+            </div>
+            <div className="h-10 w-px bg-gray-200"></div>
+            <div className="text-right">
+              <p className="text-xs text-gray-500 uppercase font-medium">Total Stock Value</p>
+              <p className="text-xl font-bold text-gray-900">{totalStockValue} bags</p>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          {/* Transfer to Vendor */}
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-            <h3 className="text-sm font-bold text-gray-800 mb-3">Stock Vendor (Central → Vendor)</h3>
-            <select 
-              value={transferVendor}
-              onChange={(e) => setTransferVendor(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm mb-2 bg-white"
-            >
-              <option value="">Select Vendor...</option>
+        {/* Vendor Stock List Table */}
+        <div className="border border-gray-100 rounded-xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b border-gray-100">
+              <tr>
+                <th className="text-left p-3 font-medium text-gray-500">Vendor Name</th>
+                <th className="text-center p-3 font-medium text-gray-500">Reserved</th>
+                <th className="text-center p-3 font-medium text-gray-500">Available</th>
+                <th className="text-right p-3 font-medium text-gray-500">Stock Control</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {vendors.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="p-6 text-center text-gray-400">No approved vendors found.</td>
+                </tr>
+              )}
               {vendors.map((v) => (
-                <option key={v.profile_id} value={v.profile_id}>{v.name}</option>
+                <tr key={v.profile_id} className="hover:bg-gray-50">
+                  <td className="p-3 font-medium text-gray-800">{v.name}</td>
+                  <td className="p-3 text-center text-gray-600">{v.reserved || 0}</td>
+                  <td className="p-3 text-center font-bold text-cyan-700">{v.available || 0}</td>
+                  <td className="p-3">
+                    <div className="flex items-center gap-2 justify-end">
+                      <input 
+                        type="number"
+                        min="1"
+                        value={stockInputs[v.profile_id] || ''}
+                        onChange={(e) => setStockInputs({...stockInputs, [v.profile_id]: e.target.value})}
+                        placeholder="Qty"
+                        className="w-20 px-2 py-1 border border-gray-200 rounded-md text-sm bg-white"
+                      />
+                      <button 
+                        onClick={() => handleAddStock(v.profile_id)}
+                        disabled={loading}
+                        className="bg-cyan-50 text-cyan-700 text-xs font-bold py-1.5 px-3 rounded-md hover:bg-cyan-100 disabled:opacity-50"
+                      >
+                        Add
+                      </button>
+                      <button 
+                        onClick={() => handleRemoveStock(v.profile_id)}
+                        disabled={loading}
+                        className="bg-orange-50 text-orange-700 text-xs font-bold py-1.5 px-3 rounded-md hover:bg-orange-100 disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </td>
+                </tr>
               ))}
-            </select>
-            <input 
-              type="number"
-              min="1"
-              value={transferQty || ''}
-              onChange={(e) => setTransferQty(parseInt(e.target.value))}
-              placeholder="Quantity to transfer"
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm mb-3 bg-white"
-            />
-            <button 
-              onClick={handleTransfer}
-              disabled={loading}
-              className="w-full bg-cyan-600 text-white text-sm font-bold py-2 rounded-lg hover:bg-cyan-700 disabled:opacity-50"
-            >
-              Send Stock
-            </button>
-          </div>
-
-          {/* Unstock Vendor */}
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-            <h3 className="text-sm font-bold text-gray-800 mb-3">Unstock Vendor (Vendor → Central)</h3>
-            <select 
-              value={unstockVendor}
-              onChange={(e) => setUnstockVendor(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm mb-2 bg-white"
-            >
-              <option value="">Select Vendor...</option>
-              {vendors.map((v) => (
-                <option key={v.profile_id} value={v.profile_id}>{v.name}</option>
-              ))}
-            </select>
-            <input 
-              type="number"
-              min="1"
-              value={unstockQty || ''}
-              onChange={(e) => setUnstockQty(parseInt(e.target.value))}
-              placeholder="Quantity to reclaim"
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm mb-3 bg-white"
-            />
-            <button 
-              onClick={handleUnstock}
-              disabled={loading}
-              className="w-full bg-orange-600 text-white text-sm font-bold py-2 rounded-lg hover:bg-orange-700 disabled:opacity-50"
-            >
-              Reclaim Stock
-            </button>
-          </div>
-        </div>
-
-        {/* Vendor Stock List */}
-        <div className="border-t border-gray-100 pt-4">
-          <h3 className="text-sm font-bold text-gray-800 mb-3">Vendor Stock Levels</h3>
-          <div className="space-y-2">
-            {vendors.map((v) => (
-              <div key={v.profile_id} className="flex justify-between items-center bg-gray-50 rounded-lg p-3 border border-gray-100">
-                <span className="font-medium text-gray-800">{v.name}</span>
-                <div className="flex gap-4 text-sm">
-                  <span className="text-gray-500">Reserved: <b className="text-gray-700">{v.reserved}</b></span>
-                  <span className="text-gray-500">Available: <b className="text-cyan-700">{v.available}</b></span>
-                </div>
-              </div>
-            ))}
-            {vendors.length === 0 && <p className="text-gray-400 text-sm text-center py-4">No approved vendors yet.</p>}
-          </div>
+            </tbody>
+          </table>
         </div>
       </div>
 
