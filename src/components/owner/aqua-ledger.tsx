@@ -72,7 +72,8 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
       setQuantity(0)
       setAmount(0)
       setIsStockPurchase(false)
-      router.refresh()
+      await fetchData() // Instant UI update
+      router.refresh()   // Update server props (vendors/store)
     }
     setLoading(false)
   }
@@ -90,7 +91,7 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
     if (error) alert('Error: ' + error.message)
     else {
       setStockInputs({ ...stockInputs, [vendorId]: '' })
-      router.refresh()
+      router.refresh() // Refresh server props to show new stock
     }
     setLoading(false)
   }
@@ -108,7 +109,7 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
     if (error) alert('Error: ' + error.message)
     else {
       setStockInputs({ ...stockInputs, [vendorId]: '' })
-      router.refresh()
+      router.refresh() // Refresh server props to show new stock
     }
     setLoading(false)
   }
@@ -122,7 +123,7 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
       
       {/* === AQUA LEDGER BOOK === */}
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-        <div className="bg-gray-50 border-b border-gray-200 p-4 flex justify-between items-center">
+        <div className="bg-gray-50 border-b border-gray-200 p-4 flex flex-wrap justify-between items-center gap-2">
           <h2 className="text-xl font-bold text-gray-900">📒 Aqua Ledger</h2>
           <div className={`px-4 py-2 rounded-full font-bold text-sm ${isProfit ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
             {isProfit ? 'Profit' : 'Loss'}: ₦{Math.abs(Number(summary.profit)).toLocaleString()}
@@ -133,18 +134,18 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
           {/* Debit Side (Left) */}
           <div className="p-4 bg-red-50/30">
             <div className="flex justify-between items-center mb-4 pb-2 border-b border-red-200">
-              <h3 className="font-bold text-red-700">Debit (Expenses)</h3>
-              <span className="text-sm font-bold text-red-600">-₦{Number(summary.total_debit).toLocaleString()}</span>
+              <h3 className="font-bold text-red-700 text-sm sm:text-base">Debit (Expenses)</h3>
+              <span className="text-xs sm:text-sm font-bold text-red-600">-₦{Number(summary.total_debit).toLocaleString()}</span>
             </div>
             <div className="space-y-3 text-sm">
               {debitEntries.length === 0 && <p className="text-gray-400 text-center py-4">No entries</p>}
               {debitEntries.map((e) => (
-                <div key={e.id} className="flex justify-between items-start">
+                <div key={e.id} className="flex justify-between items-start gap-2">
                   <div>
                     <p className="font-semibold text-gray-800">{e.category}</p>
                     <p className="text-xs text-gray-500">{new Date(e.entry_date).toLocaleDateString()} {e.quantity > 0 && `• Qty: ${e.quantity}`}</p>
                   </div>
-                  <p className="font-bold text-red-600">₦{Number(e.amount).toLocaleString()}</p>
+                  <p className="font-bold text-red-600 whitespace-nowrap">₦{Number(e.amount).toLocaleString()}</p>
                 </div>
               ))}
             </div>
@@ -153,18 +154,18 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
           {/* Credit Side (Right) */}
           <div className="p-4 bg-green-50/30">
             <div className="flex justify-between items-center mb-4 pb-2 border-b border-green-200">
-              <h3 className="font-bold text-green-700">Credit (Income)</h3>
-              <span className="text-sm font-bold text-green-600">+₦{Number(summary.total_credit).toLocaleString()}</span>
+              <h3 className="font-bold text-green-700 text-sm sm:text-base">Credit (Income)</h3>
+              <span className="text-xs sm:text-sm font-bold text-green-600">+₦{Number(summary.total_credit).toLocaleString()}</span>
             </div>
             <div className="space-y-3 text-sm">
               {creditEntries.length === 0 && <p className="text-gray-400 text-center py-4">No entries</p>}
               {creditEntries.map((e) => (
-                <div key={e.id} className="flex justify-between items-start">
+                <div key={e.id} className="flex justify-between items-start gap-2">
                   <div>
                     <p className="font-semibold text-gray-800">{e.category}</p>
                     <p className="text-xs text-gray-500">{new Date(e.entry_date).toLocaleDateString()} {e.quantity > 0 && `• Qty: ${e.quantity}`}</p>
                   </div>
-                  <p className="font-bold text-green-600">₦{Number(e.amount).toLocaleString()}</p>
+                  <p className="font-bold text-green-600 whitespace-nowrap">₦{Number(e.amount).toLocaleString()}</p>
                 </div>
               ))}
             </div>
@@ -183,74 +184,64 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
       </div>
 
       {/* === INVENTORY MANAGEMENT === */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-4 sm:p-6">
         <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
-          <h2 className="text-xl font-bold text-gray-900">Warehouse & Vendor Inventory</h2>
-          <div className="flex gap-6 items-center">
+          <h2 className="text-xl font-bold text-gray-900">Inventory Control</h2>
+          <div className="flex gap-4 sm:gap-6 items-center">
             <div className="text-right">
-              <p className="text-xs text-gray-500 uppercase font-medium">Central Store</p>
-              <p className="text-xl font-bold text-cyan-700">{storeStock} bags</p>
+              <p className="text-[10px] sm:text-xs text-gray-500 uppercase font-medium">Central Store</p>
+              <p className="text-base sm:text-xl font-bold text-cyan-700">{storeStock} bags</p>
             </div>
-            <div className="h-10 w-px bg-gray-200"></div>
+            <div className="h-8 sm:h-10 w-px bg-gray-200"></div>
             <div className="text-right">
-              <p className="text-xs text-gray-500 uppercase font-medium">Total Stock Value</p>
-              <p className="text-xl font-bold text-gray-900">{totalStockValue} bags</p>
+              <p className="text-[10px] sm:text-xs text-gray-500 uppercase font-medium">Total Stock</p>
+              <p className="text-base sm:text-xl font-bold text-gray-900">{totalStockValue} bags</p>
             </div>
           </div>
         </div>
 
-        {/* Vendor Stock List Table */}
-        <div className="border border-gray-100 rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
-              <tr>
-                <th className="text-left p-3 font-medium text-gray-500">Vendor Name</th>
-                <th className="text-center p-3 font-medium text-gray-500">Reserved</th>
-                <th className="text-center p-3 font-medium text-gray-500">Available</th>
-                <th className="text-right p-3 font-medium text-gray-500">Stock Control</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {vendors.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="p-6 text-center text-gray-400">No approved vendors found.</td>
-                </tr>
-              )}
-              {vendors.map((v) => (
-                <tr key={v.profile_id} className="hover:bg-gray-50">
-                  <td className="p-3 font-medium text-gray-800">{v.name}</td>
-                  <td className="p-3 text-center text-gray-600">{v.reserved || 0}</td>
-                  <td className="p-3 text-center font-bold text-cyan-700">{v.available || 0}</td>
-                  <td className="p-3">
-                    <div className="flex items-center gap-2 justify-end">
-                      <input 
-                        type="number"
-                        min="1"
-                        value={stockInputs[v.profile_id] || ''}
-                        onChange={(e) => setStockInputs({...stockInputs, [v.profile_id]: e.target.value})}
-                        placeholder="Qty"
-                        className="w-20 px-2 py-1 border border-gray-200 rounded-md text-sm bg-white"
-                      />
-                      <button 
-                        onClick={() => handleAddStock(v.profile_id)}
-                        disabled={loading}
-                        className="bg-cyan-50 text-cyan-700 text-xs font-bold py-1.5 px-3 rounded-md hover:bg-cyan-100 disabled:opacity-50"
-                      >
-                        Add
-                      </button>
-                      <button 
-                        onClick={() => handleRemoveStock(v.profile_id)}
-                        disabled={loading}
-                        className="bg-orange-50 text-orange-700 text-xs font-bold py-1.5 px-3 rounded-md hover:bg-orange-100 disabled:opacity-50"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Vendor Stock List - Mobile Friendly Cards */}
+        <div className="space-y-4">
+          {vendors.length === 0 && (
+            <div className="p-6 text-center text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+              No approved vendors found.
+            </div>
+          )}
+          {vendors.map((v) => (
+            <div key={v.profile_id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex justify-between items-center sm:w-1/3">
+                <span className="font-bold text-gray-800 text-sm sm:text-base">{v.name}</span>
+              </div>
+              <div className="flex items-center gap-4 text-sm">
+                <span className="text-gray-500 text-xs sm:text-sm">Res: <b className="text-gray-700">{v.reserved || 0}</b></span>
+                <span className="text-cyan-700 text-xs sm:text-sm">Avail: <b className="text-base sm:text-lg">{v.available || 0}</b></span>
+              </div>
+              <div className="flex items-center gap-2 mt-2 sm:mt-0 sm:w-auto">
+                <input 
+                  type="number"
+                  min="1"
+                  value={stockInputs[v.profile_id] || ''}
+                  onChange={(e) => setStockInputs({...stockInputs, [v.profile_id]: e.target.value})}
+                  placeholder="Qty"
+                  className="w-16 sm:w-20 px-2 py-2 border border-gray-200 rounded-lg text-sm bg-white text-center"
+                />
+                <button 
+                  onClick={() => handleAddStock(v.profile_id)}
+                  disabled={loading}
+                  className="flex-1 sm:flex-none bg-cyan-600 text-white text-xs font-bold py-2 px-3 rounded-lg hover:bg-cyan-700 disabled:opacity-50"
+                >
+                  Add
+                </button>
+                <button 
+                  onClick={() => handleRemoveStock(v.profile_id)}
+                  disabled={loading}
+                  className="flex-1 sm:flex-none bg-orange-500 text-white text-xs font-bold py-2 px-3 rounded-lg hover:bg-orange-600 disabled:opacity-50"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -267,11 +258,11 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
               <div className="flex gap-4">
                 <label className="flex-1 flex items-center gap-2 cursor-pointer">
                   <input type="radio" checked={entryType === 'credit'} onChange={() => setEntryType('credit')} />
-                  <span className="text-sm font-medium text-green-600">Credit (Income)</span>
+                  <span className="text-sm font-medium text-green-600">Credit</span>
                 </label>
                 <label className="flex-1 flex items-center gap-2 cursor-pointer">
                   <input type="radio" checked={entryType === 'debit'} onChange={() => setEntryType('debit')} />
-                  <span className="text-sm font-medium text-red-600">Debit (Expense)</span>
+                  <span className="text-sm font-medium text-red-600">Debit</span>
                 </label>
               </div>
 
@@ -343,7 +334,7 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
                     onChange={(e) => setIsStockPurchase(e.target.checked)}
                     className="rounded"
                   />
-                  This is a stock purchase (Adds quantity to Central Aqua Store)
+                  This is a stock purchase (Adds to Central Aqua Store)
                 </label>
               )}
 
