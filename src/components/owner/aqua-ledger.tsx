@@ -11,33 +11,33 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
   
   const [entries, setEntries] = useState<any[]>([])
   const [summary, setSummary] = useState({ total_credit: 0, total_debit: 0, profit: 0 })
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  // Manual entry form state
-  const [entryType, setEntryType] = useState<'credit' | 'debit'>('credit')
-  const [category, setCategory] = useState('')
-  const [description, setDescription] = useState('')
-  const [quantity, setQuantity] = useState(0)
-  const [amount, setAmount] = useState(0)
-  const [isStockPurchase, setIsStockPurchase] = useState(false)
-
-  // Stock transfer state
+  // Inventory state
   const [transferVendor, setTransferVendor] = useState('')
   const [transferQty, setTransferQty] = useState(0)
   const [unstockVendor, setUnstockVendor] = useState('')
   const [unstockQty, setUnstockQty] = useState(0)
 
+  // Form state
+  const today = new Date().toISOString().split('T')[0]
+  const [entryType, setEntryType] = useState<'credit' | 'debit'>('credit')
+  const [date, setDate] = useState(today)
+  const [category, setCategory] = useState('Sales')
+  const [customCategory, setCustomCategory] = useState('')
+  const [quantity, setQuantity] = useState(0)
+  const [amount, setAmount] = useState(0)
+  const [isStockPurchase, setIsStockPurchase] = useState(false)
+
   async function fetchData() {
-    // Fetch ledger entries
     const { data: ledgerData } = await supabase
       .from('aqualedger_entries')
       .select('*')
       .order('entry_date', { ascending: false })
-      .limit(50)
     
     if (ledgerData) setEntries(ledgerData)
 
-    // Fetch summary
     const { data: summaryData } = await supabase.rpc('get_ledger_summary')
     if (summaryData) setSummary(summaryData)
   }
@@ -48,25 +48,26 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
 
   async function handleLogEntry(e: React.FormEvent) {
     e.preventDefault()
-    if (!category.trim()) return alert('Please enter a transaction type/category.')
-    if (amount <= 0) return alert('Amount must be greater than 0.')
+    const finalCategory = category === 'Custom' ? customCategory : category
+    if (!finalCategory.trim()) return alert('Please enter a transaction type.')
+    if (amount <= 0) return alert('Price/Amount must be greater than 0.')
 
     setLoading(true)
     const { error } = await supabase.rpc('log_ledger_entry', {
       p_entry_type: entryType,
-      p_category: category.trim(),
-      p_description: description.trim() || null,
+      p_category: finalCategory.trim(),
+      p_description: null,
       p_quantity: Number(quantity),
       p_amount: Number(amount),
-      p_is_stock_purchase: isStockPurchase
+      p_is_stock_purchase: isStockPurchase,
+      p_entry_date: new Date(date).toISOString()
     })
 
     if (error) {
       alert('Error: ' + error.message)
     } else {
-      alert('Ledger entry logged successfully!')
-      setCategory('')
-      setDescription('')
+      setIsModalOpen(false)
+      setCustomCategory('')
       setQuantity(0)
       setAmount(0)
       setIsStockPurchase(false)
@@ -85,10 +86,8 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
       p_quantity: Number(transferQty)
     })
 
-    if (error) {
-      alert('Error: ' + error.message)
-    } else {
-      alert(`Successfully transferred ${transferQty} bags to vendor!`)
+    if (error) alert('Error: ' + error.message)
+    else {
       setTransferVendor('')
       setTransferQty(0)
       router.refresh()
@@ -106,10 +105,8 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
       p_quantity: Number(unstockQty)
     })
 
-    if (error) {
-      alert('Error: ' + error.message)
-    } else {
-      alert(`Successfully unstocked ${unstockQty} bags from vendor!`)
+    if (error) alert('Error: ' + error.message)
+    else {
       setUnstockVendor('')
       setUnstockQty(0)
       router.refresh()
@@ -117,48 +114,93 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
     setLoading(false)
   }
 
-  async function handleDeleteEntry(id: string) {
-    if (!confirm('Delete this ledger entry? This cannot be undone.')) return
-    const { error } = await supabase.from('aqualedger_entries').delete().eq('id', id)
-    if (error) alert(error.message)
-    router.refresh()
-  }
-
   const isProfit = summary.profit >= 0
+  const debitEntries = entries.filter(e => e.entry_type === 'debit')
+  const creditEntries = entries.filter(e => e.entry_type === 'credit')
 
   return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-green-500 text-white rounded-xl p-4 shadow-md">
-          <p className="text-xs uppercase font-medium opacity-80">Total Revenue (Credit)</p>
-          <p className="text-2xl font-bold mt-1">₦{Number(summary.total_credit).toLocaleString()}</p>
+    <div className="space-y-8">
+      
+      {/* === AQUA LEDGER BOOK === */}
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <div className="bg-gray-50 border-b border-gray-200 p-4 flex justify-between items-center">
+          <h2 className="text-xl font-bold text-gray-900">📒 Aqua Ledger</h2>
+          <div className={`px-4 py-2 rounded-full font-bold text-sm ${isProfit ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+            {isProfit ? 'Profit' : 'Loss'}: ₦{Math.abs(Number(summary.profit)).toLocaleString()}
+          </div>
         </div>
-        <div className="bg-red-500 text-white rounded-xl p-4 shadow-md">
-          <p className="text-xs uppercase font-medium opacity-80">Total Expenses (Debit)</p>
-          <p className="text-2xl font-bold mt-1">₦{Number(summary.total_debit).toLocaleString()}</p>
+
+        <div className="grid grid-cols-2 divide-x divide-gray-200">
+          {/* Debit Side (Left) */}
+          <div className="p-4 bg-red-50/30">
+            <div className="flex justify-between items-center mb-4 pb-2 border-b border-red-200">
+              <h3 className="font-bold text-red-700">Debit (Expenses)</h3>
+              <span className="text-sm font-bold text-red-600">-₦{Number(summary.total_debit).toLocaleString()}</span>
+            </div>
+            <div className="space-y-3 text-sm">
+              {debitEntries.length === 0 && <p className="text-gray-400 text-center py-4">No entries</p>}
+              {debitEntries.map((e) => (
+                <div key={e.id} className="flex justify-between items-start">
+                  <div>
+                    <p className="font-semibold text-gray-800">{e.category}</p>
+                    <p className="text-xs text-gray-500">{new Date(e.entry_date).toLocaleDateString()} {e.quantity > 0 && `• Qty: ${e.quantity}`}</p>
+                  </div>
+                  <p className="font-bold text-red-600">₦{Number(e.amount).toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Credit Side (Right) */}
+          <div className="p-4 bg-green-50/30">
+            <div className="flex justify-between items-center mb-4 pb-2 border-b border-green-200">
+              <h3 className="font-bold text-green-700">Credit (Income)</h3>
+              <span className="text-sm font-bold text-green-600">+₦{Number(summary.total_credit).toLocaleString()}</span>
+            </div>
+            <div className="space-y-3 text-sm">
+              {creditEntries.length === 0 && <p className="text-gray-400 text-center py-4">No entries</p>}
+              {creditEntries.map((e) => (
+                <div key={e.id} className="flex justify-between items-start">
+                  <div>
+                    <p className="font-semibold text-gray-800">{e.category}</p>
+                    <p className="text-xs text-gray-500">{new Date(e.entry_date).toLocaleDateString()} {e.quantity > 0 && `• Qty: ${e.quantity}`}</p>
+                  </div>
+                  <p className="font-bold text-green-600">₦{Number(e.amount).toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-        <div className={`${isProfit ? 'bg-cyan-600' : 'bg-orange-600'} text-white rounded-xl p-4 shadow-md`}>
-          <p className="text-xs uppercase font-medium opacity-80">{isProfit ? 'Profit' : 'Loss'}</p>
-          <p className="text-2xl font-bold mt-1">₦{Math.abs(Number(summary.profit)).toLocaleString()}</p>
+
+        {/* Add Log Button */}
+        <div className="p-4 bg-gray-50 border-t border-gray-200 text-center">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="text-cyan-600 font-semibold text-sm hover:underline"
+          >
+            + add log
+          </button>
         </div>
       </div>
 
-      {/* Aqua Store + Stock Transfers */}
-      <div className="bg-white/80 backdrop-blur-md border border-white/50 shadow-xl rounded-2xl p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold text-gray-900">Aqua Store (Central Stock)</h2>
-          <span className="text-2xl font-bold text-cyan-700 bg-cyan-50 px-4 py-1 rounded-full">{storeStock} bags</span>
+      {/* === INVENTORY MANAGEMENT === */}
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-gray-900">Warehouse & Vendor Inventory</h2>
+          <div className="bg-cyan-50 px-4 py-2 rounded-full">
+            <span className="text-sm font-medium text-cyan-700">Aqua Store (Central): </span>
+            <span className="text-lg font-bold text-cyan-900">{storeStock} bags</span>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* Transfer to Vendor */}
-          <div className="bg-gray-50 rounded-xl p-4">
-            <h3 className="text-sm font-bold text-gray-800 mb-2">Stock Vendor (Aqua Store → Vendor)</h3>
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <h3 className="text-sm font-bold text-gray-800 mb-3">Stock Vendor (Central → Vendor)</h3>
             <select 
               value={transferVendor}
               onChange={(e) => setTransferVendor(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm mb-2"
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm mb-2 bg-white"
             >
               <option value="">Select Vendor...</option>
               {vendors.map((v) => (
@@ -170,25 +212,25 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
               min="1"
               value={transferQty || ''}
               onChange={(e) => setTransferQty(parseInt(e.target.value))}
-              placeholder="Quantity"
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm mb-2"
+              placeholder="Quantity to transfer"
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm mb-3 bg-white"
             />
             <button 
               onClick={handleTransfer}
               disabled={loading}
               className="w-full bg-cyan-600 text-white text-sm font-bold py-2 rounded-lg hover:bg-cyan-700 disabled:opacity-50"
             >
-              Transfer Stock
+              Send Stock
             </button>
           </div>
 
           {/* Unstock Vendor */}
-          <div className="bg-gray-50 rounded-xl p-4">
-            <h3 className="text-sm font-bold text-gray-800 mb-2">Unstock Vendor (Vendor → Aqua Store)</h3>
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <h3 className="text-sm font-bold text-gray-800 mb-3">Unstock Vendor (Vendor → Central)</h3>
             <select 
               value={unstockVendor}
               onChange={(e) => setUnstockVendor(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm mb-2"
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm mb-2 bg-white"
             >
               <option value="">Select Vendor...</option>
               {vendors.map((v) => (
@@ -200,161 +242,141 @@ export default function AquaLedger({ vendors, storeStock }: { vendors: any[]; st
               min="1"
               value={unstockQty || ''}
               onChange={(e) => setUnstockQty(parseInt(e.target.value))}
-              placeholder="Quantity"
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm mb-2"
+              placeholder="Quantity to reclaim"
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm mb-3 bg-white"
             />
             <button 
               onClick={handleUnstock}
               disabled={loading}
               className="w-full bg-orange-600 text-white text-sm font-bold py-2 rounded-lg hover:bg-orange-700 disabled:opacity-50"
             >
-              Unstock Vendor
+              Reclaim Stock
             </button>
           </div>
         </div>
 
-        {/* Vendor Stock Display */}
-        <div className="mt-4">
-          <h3 className="text-sm font-bold text-gray-800 mb-2">Vendor Stock Levels</h3>
+        {/* Vendor Stock List */}
+        <div className="border-t border-gray-100 pt-4">
+          <h3 className="text-sm font-bold text-gray-800 mb-3">Vendor Stock Levels</h3>
           <div className="space-y-2">
             {vendors.map((v) => (
-              <div key={v.profile_id} className="flex justify-between items-center bg-white rounded-lg p-2 border border-gray-100">
-                <span className="text-sm font-medium text-gray-800">{v.name}</span>
-                <span className="text-sm text-gray-600">Available: <span className="font-bold text-cyan-700">{v.available}</span> | Reserved: {v.reserved}</span>
+              <div key={v.profile_id} className="flex justify-between items-center bg-gray-50 rounded-lg p-3 border border-gray-100">
+                <span className="font-medium text-gray-800">{v.name}</span>
+                <div className="flex gap-4 text-sm">
+                  <span className="text-gray-500">Reserved: <b className="text-gray-700">{v.reserved}</b></span>
+                  <span className="text-gray-500">Available: <b className="text-cyan-700">{v.available}</b></span>
+                </div>
               </div>
             ))}
+            {vendors.length === 0 && <p className="text-gray-400 text-sm text-center py-4">No approved vendors yet.</p>}
           </div>
         </div>
       </div>
 
-      {/* Manual Ledger Entry Form */}
-      <div className="bg-white/80 backdrop-blur-md border border-white/50 shadow-xl rounded-2xl p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Log Manual Entry</h2>
-        <form onSubmit={handleLogEntry} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-            <select 
-              value={entryType}
-              onChange={(e) => setEntryType(e.target.value as 'credit' | 'debit')}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
-            >
-              <option value="credit">Credit (Income)</option>
-              <option value="debit">Debit (Expense)</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Transaction Type</label>
-            <input 
-              type="text"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="e.g., Transport, Maintenance, Misc Income"
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
-            <input 
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Details..."
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-            <input 
-              type="number"
-              min="0"
-              value={quantity || ''}
-              onChange={(e) => setQuantity(parseInt(e.target.value))}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₦)</label>
-            <input 
-              type="number"
-              min="0"
-              step="0.01"
-              value={amount || ''}
-              onChange={(e) => setAmount(parseFloat(e.target.value))}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
-              required
-            />
-          </div>
-          <div className="flex items-end">
-            {entryType === 'debit' && (
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+      {/* === ADD LOG MODAL === */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setIsModalOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fade-in-up" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-gray-900">Add Ledger Log</h3>
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            
+            <form onSubmit={handleLogEntry} className="space-y-4">
+              <div className="flex gap-4">
+                <label className="flex-1 flex items-center gap-2 cursor-pointer">
+                  <input type="radio" checked={entryType === 'credit'} onChange={() => setEntryType('credit')} />
+                  <span className="text-sm font-medium text-green-600">Credit (Income)</span>
+                </label>
+                <label className="flex-1 flex items-center gap-2 cursor-pointer">
+                  <input type="radio" checked={entryType === 'debit'} onChange={() => setEntryType('debit')} />
+                  <span className="text-sm font-medium text-red-600">Debit (Expense)</span>
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
                 <input 
-                  type="checkbox"
-                  checked={isStockPurchase}
-                  onChange={(e) => setIsStockPurchase(e.target.checked)}
-                  className="rounded"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
                 />
-                This is a stock purchase (adds to Aqua Store)
-              </label>
-            )}
-          </div>
-          <div className="md:col-span-3">
-            <button 
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gray-800 text-white font-bold py-3 rounded-xl hover:bg-gray-900 disabled:opacity-50"
-            >
-              {loading ? 'Logging...' : 'Log Entry'}
-            </button>
-          </div>
-        </form>
-      </div>
+              </div>
 
-      {/* Ledger Entries (Balance Sheet) */}
-      <div className="bg-white/80 backdrop-blur-md border border-white/50 shadow-xl rounded-2xl p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Ledger History</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="text-left p-3 font-medium text-gray-500">Date</th>
-                <th className="text-left p-3 font-medium text-gray-500">Type</th>
-                <th className="text-left p-3 font-medium text-gray-500">Description</th>
-                <th className="text-center p-3 font-medium text-gray-500">Qty</th>
-                <th className="text-right p-3 font-medium text-green-600">Credit (₦)</th>
-                <th className="text-right p-3 font-medium text-red-600">Debit (₦)</th>
-                <th className="text-center p-3 font-medium text-gray-400">-</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="p-6 text-center text-gray-400">No ledger entries yet.</td>
-                </tr>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Transaction Type</label>
+                <select 
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm mb-2"
+                >
+                  <option>Sales</option>
+                  <option>Stock Up</option>
+                  <option>Vendor Pay</option>
+                  <option>Custom</option>
+                </select>
+                {category === 'Custom' && (
+                  <input 
+                    type="text"
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
+                    placeholder="Type custom transaction name"
+                    required
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
+                  />
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quantity (Bags)</label>
+                  <input 
+                    type="number"
+                    min="0"
+                    value={quantity || ''}
+                    onChange={(e) => setQuantity(parseInt(e.target.value))}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price/Amount (₦)</label>
+                  <input 
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={amount || ''}
+                    onChange={(e) => setAmount(parseFloat(e.target.value))}
+                    required
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
+                  />
+                </div>
+              </div>
+
+              {entryType === 'debit' && (
+                <label className="flex items-center gap-2 text-sm text-gray-700 bg-blue-50 p-3 rounded-lg">
+                  <input 
+                    type="checkbox"
+                    checked={isStockPurchase}
+                    onChange={(e) => setIsStockPurchase(e.target.checked)}
+                    className="rounded"
+                  />
+                  This is a stock purchase (Adds quantity to Central Aqua Store)
+                </label>
               )}
-              {entries.map((e) => (
-                <tr key={e.id} className="border-b border-gray-50 hover:bg-gray-50">
-                  <td className="p-3 text-gray-500 text-xs">{new Date(e.entry_date).toLocaleString()}</td>
-                  <td className="p-3">
-                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${e.entry_type === 'credit' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                      {e.category}
-                    </span>
-                  </td>
-                  <td className="p-3 text-gray-700">{e.description || '—'}</td>
-                  <td className="p-3 text-center text-gray-500">{e.quantity || '—'}</td>
-                  <td className="p-3 text-right font-bold text-green-600">{e.entry_type === 'credit' ? Number(e.amount).toLocaleString() : '—'}</td>
-                  <td className="p-3 text-right font-bold text-red-600">{e.entry_type === 'debit' ? Number(e.amount).toLocaleString() : '—'}</td>
-                  <td className="p-3 text-center">
-                    {!e.related_order_id && (
-                      <button onClick={() => handleDeleteEntry(e.id)} className="text-xs text-gray-400 hover:text-red-500">✕</button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+              <button 
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gray-800 text-white font-bold py-3 rounded-xl hover:bg-gray-900 disabled:opacity-50 mt-2"
+              >
+                {loading ? 'Saving...' : 'Save Log'}
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
