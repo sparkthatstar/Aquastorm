@@ -71,22 +71,40 @@ export default async function OwnerDashboard() {
     .order('created_at', { ascending: false })
     .limit(10)
 
-  // Fetch Vendors with their inventory
+  // Fetch Vendors separately to avoid 400 errors
   const { data: vendorsRaw } = await supabase
     .from('vendors')
-    .select(`
-      profile_id, is_approved,
-      profile:profiles!vendors_profile_id_fkey ( full_name ),
-      inventory:inventory!inventory_vendor_id_fkey ( available, reserved, delivered )
-    `)
+    .select('profile_id')
     .eq('is_approved', true)
 
-  const vendors = ((vendorsRaw as any[]) || []).map(v => ({
-    profile_id: v.profile_id,
-    name: Array.isArray(v.profile) ? v.profile[0]?.full_name : v.profile?.full_name || 'Unknown',
-    available: Array.isArray(v.inventory) ? v.inventory[0]?.available || 0 : v.inventory?.available || 0,
-    reserved: Array.isArray(v.inventory) ? v.inventory[0]?.reserved || 0 : v.inventory?.reserved || 0,
-  }))
+  let vendors: any[] = []
+  if (vendorsRaw && vendorsRaw.length > 0) {
+    const vendorIds = vendorsRaw.map(v => v.profile_id)
+    
+    // 1. Fetch vendor names
+    const { data: vendorProfiles } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', vendorIds)
+
+    // 2. Fetch vendor inventory
+    const { data: vendorInventories } = await supabase
+      .from('inventory')
+      .select('vendor_id, available, reserved, delivered')
+      .in('vendor_id', vendorIds)
+
+    // 3. Combine them safely
+    vendors = vendorIds.map(id => {
+      const profile = vendorProfiles?.find(p => p.id === id)
+      const inv = vendorInventories?.find(i => i.vendor_id === id)
+      return {
+        profile_id: id,
+        name: profile?.full_name || 'Unknown',
+        available: inv?.available || 0,
+        reserved: inv?.reserved || 0
+      }
+    })
+  }
 
   // Fetch Aqua Store total stock
   const { data: storeData } = await supabase
