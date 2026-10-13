@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import AvailableOrders from '@/components/vendor/available-orders'
 import ActiveDeliveries from '@/components/vendor/active-deliveries'
 import CashoutManager from '@/components/vendor/cashout-manager'
+import DepoSale from '@/components/vendor/depo-sale'
 
 export default async function VendorDashboard() {
   const supabase = await createClient()
@@ -22,7 +23,7 @@ export default async function VendorDashboard() {
     .eq('vendor_id', user!.id)
     .single()
 
-      const { data: availableOrders } = await supabase
+  const { data: availableOrders } = await supabase
     .from('orders')
     .select(`
       id, quantity_ordered, total_amount, payment_method, created_at,
@@ -31,7 +32,7 @@ export default async function VendorDashboard() {
     .in('status', ['placed', 'available'])
     .order('created_at', { ascending: false })
 
-      const { data: activeOrders } = await supabase
+  const { data: activeOrders } = await supabase
     .from('orders')
     .select(`
       id, status, quantity_ordered, total_amount, payment_method, comment,
@@ -79,6 +80,11 @@ export default async function VendorDashboard() {
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Cash Out</h2>
         <CashoutManager balance={points || 0} bankDetails={vendor} />
+      </div>
+
+      <div>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Walk-in Sales</h2>
+        <DepoSale />
       </div>
     </div>
   )
