@@ -21,7 +21,6 @@ export default function OrderFlow() {
   const pricePerBag = 450
   const total = quantity * pricePerBag
 
-  // Bank account details
   const bankName = 'OPay'
   const accountName = 'GOSPEL CHUKWUDI'
   const accountNumber = '9157004812'
@@ -30,9 +29,9 @@ export default function OrderFlow() {
     try {
       await navigator.clipboard.writeText(accountNumber)
       setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
+      setTimeout(() => setCopied(false), 2500)
     } catch {
-      alert('Copy failed. Please copy the account number manually.')
+      alert('Unable to copy automatically. Please copy the account number manually.')
     }
   }
 
@@ -53,8 +52,7 @@ export default function OrderFlow() {
       if (rpcError) throw rpcError
 
       if (paymentMethod === 'transfer' && receiptFile) {
-        const fileExtension = receiptFile.name.split('.').pop() || 'png'
-        const filePath = `${orderId}/receipt-${Date.now()}.${fileExtension}`
+        const filePath = `${orderId}/receipt-${Date.now()}.${receiptFile.name.split('.').pop() || 'png'}`
 
         const { error: uploadError } = await supabase.storage
           .from('receipts')
@@ -97,9 +95,7 @@ export default function OrderFlow() {
       router.refresh()
     } catch (err: any) {
       console.error('Order Error:', err)
-      const message = err.message || 'Failed to place order'
-      alert(message)
-      setError(message)
+      setError(err.message || 'Failed to place order')
       setLoading(false)
     }
   }
@@ -108,48 +104,45 @@ export default function OrderFlow() {
     return (
       <div className="space-y-6">
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-800 mb-2">
             How many bags?
           </label>
 
           <div className="flex items-center justify-center gap-6">
             <button
-              type="button"
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="h-12 w-12 rounded-full bg-gray-100 text-2xl font-bold text-gray-700"
+              className="w-12 h-12 rounded-full bg-gray-100 text-2xl font-bold text-gray-800"
             >
               -
             </button>
 
-            <span className="w-16 text-center text-4xl font-bold text-cyan-600">
+            <span className="text-4xl font-bold text-cyan-700 w-16 text-center">
               {quantity}
             </span>
 
             <button
-              type="button"
               onClick={() => setQuantity(quantity + 1)}
-              className="h-12 w-12 rounded-full bg-gray-100 text-2xl font-bold text-gray-700"
+              className="w-12 h-12 rounded-full bg-gray-100 text-2xl font-bold text-gray-800"
             >
               +
             </button>
           </div>
 
-          <p className="mt-2 text-center text-gray-500">
-            ₦{pricePerBag} per bag
+          <p className="text-center text-gray-700 mt-2">
+            ₦{pricePerBag.toLocaleString()} per bag
           </p>
         </div>
 
-        <div className="flex items-center justify-between rounded-lg bg-cyan-50 p-4">
-          <span className="font-medium text-gray-700">Total:</span>
-          <span className="text-xl font-bold text-cyan-600">
+        <div className="bg-cyan-50 border border-cyan-100 p-4 rounded-lg flex justify-between items-center">
+          <span className="font-semibold text-gray-800">Total:</span>
+          <span className="text-xl font-bold text-cyan-800">
             ₦{total.toLocaleString()}
           </span>
         </div>
 
         <button
-          type="button"
           onClick={() => setStep(2)}
-          className="w-full rounded-lg bg-cyan-600 py-3 font-semibold text-white hover:bg-cyan-700"
+          className="w-full bg-cyan-700 text-white font-semibold py-3 rounded-lg hover:bg-cyan-800"
         >
           Continue
         </button>
@@ -164,36 +157,33 @@ export default function OrderFlow() {
 
         <div className="grid grid-cols-2 gap-4">
           <button
-            type="button"
             onClick={() => {
               setPaymentMethod('cash')
               setStep(3)
             }}
-            className="rounded-xl border-2 border-gray-200 p-6 transition-colors hover:border-cyan-500"
+            className="border-2 border-gray-300 rounded-xl p-6 hover:border-cyan-600 transition-colors text-gray-900"
           >
-            <span className="mb-2 block text-4xl">💵</span>
+            <span className="text-4xl block mb-2">💵</span>
             <span className="font-semibold">Cash</span>
-            <p className="text-xs text-gray-500">Pay on delivery</p>
+            <p className="text-xs text-gray-700 mt-1">Pay on delivery</p>
           </button>
 
           <button
-            type="button"
             onClick={() => {
               setPaymentMethod('transfer')
               setStep(3)
             }}
-            className="rounded-xl border-2 border-gray-200 p-6 transition-colors hover:border-cyan-500"
+            className="border-2 border-gray-300 rounded-xl p-6 hover:border-cyan-600 transition-colors text-gray-900"
           >
-            <span className="mb-2 block text-4xl">🏦</span>
-            <span className="font-semibold">Transfer</span>
-            <p className="text-xs text-gray-500">Transfer and upload receipt</p>
+            <span className="text-4xl block mb-2">🏦</span>
+            <span className="font-semibold">Bank Transfer</span>
+            <p className="text-xs text-gray-700 mt-1">Transfer and upload receipt</p>
           </button>
         </div>
 
         <button
-          type="button"
           onClick={() => setStep(1)}
-          className="text-sm text-gray-500 hover:underline"
+          className="text-gray-700 text-sm hover:underline"
         >
           ← Back
         </button>
@@ -206,60 +196,68 @@ export default function OrderFlow() {
       <div className="space-y-6">
         <h2 className="font-bold text-gray-900">
           {paymentMethod === 'transfer'
-            ? 'Bank Transfer & Receipt'
-            : 'Any instructions?'}
+            ? 'Bank Transfer Details'
+            : 'Any Instructions?'}
         </h2>
 
         {paymentMethod === 'transfer' && (
           <div className="space-y-4">
-            <div className="space-y-4 rounded-xl border-2 border-cyan-200 bg-cyan-50 p-5">
-              <h3 className="text-lg font-bold text-gray-900">
-                Bank Transfer Details
+            <div className="bg-cyan-50 border border-cyan-200 rounded-xl p-5">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">
+                AQUASTORM PAYMENT
               </h3>
 
-              <div>
-                <p className="text-sm text-gray-600">Bank Name</p>
-                <p className="font-bold text-gray-900">{bankName}</p>
-              </div>
-
-              <div>
-                <p className="text-sm text-gray-600">Account Name</p>
-                <p className="font-bold text-gray-900">{accountName}</p>
-              </div>
-
-              <div>
-                <p className="text-sm text-gray-600">Account Number</p>
-
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-xl font-bold tracking-wide text-gray-900">
-                    {accountNumber}
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={copyAccountNumber}
-                    className="rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-700"
-                  >
-                    {copied ? 'Copied!' : 'Copy Number'}
-                  </button>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-700">Bank Name</p>
+                  <p className="font-bold text-gray-900">{bankName}</p>
                 </div>
-              </div>
 
-              <div className="border-t border-cyan-200 pt-3">
-                <p className="text-sm text-gray-600">Amount to Transfer</p>
-                <p className="text-2xl font-bold text-cyan-700">
-                  ₦{total.toLocaleString()}
-                </p>
+                <div>
+                  <p className="text-sm text-gray-700">Account Name</p>
+                  <p className="font-bold text-gray-900">{accountName}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-700">Account Number</p>
+
+                  <div className="flex items-center justify-between gap-3 mt-1">
+                    <p className="text-xl font-bold tracking-wider text-gray-900">
+                      {accountNumber}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={copyAccountNumber}
+                      className="shrink-0 bg-cyan-700 text-white text-sm font-semibold px-3 py-2 rounded-lg hover:bg-cyan-800"
+                    >
+                      {copied ? 'Copied!' : 'Copy Number'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="border-t border-cyan-200 pt-4">
+                  <p className="text-sm text-gray-700">Amount to Transfer</p>
+                  <p className="text-2xl font-bold text-cyan-800">
+                    ₦{total.toLocaleString()}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <p className="text-sm text-gray-700">
-              Transfer the exact amount to the account above, then upload your
-              payment receipt below.
-            </p>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <p className="text-sm font-semibold text-amber-900">
+                Important Payment Instructions
+              </p>
+              <p className="text-sm text-amber-900 mt-2">
+                Transfer the exact amount shown above to the account details
+                provided. After completing your transfer, upload your payment
+                receipt below.
+              </p>
+            </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-gray-700">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Upload Payment Receipt
               </label>
 
@@ -269,11 +267,11 @@ export default function OrderFlow() {
                 onChange={(e) =>
                   setReceiptFile(e.target.files?.[0] || null)
                 }
-                className="block w-full text-sm text-gray-700 file:mr-4 file:rounded-full file:border-0 file:bg-cyan-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-cyan-700 hover:file:bg-cyan-100"
+                className="block w-full text-sm text-gray-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-100 file:text-cyan-900 hover:file:bg-cyan-200"
               />
 
               {receiptFile && (
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="text-sm text-green-800 mt-2">
                   Selected: {receiptFile.name}
                 </p>
               )}
@@ -282,7 +280,7 @@ export default function OrderFlow() {
         )}
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-semibold text-gray-900 mb-2">
             Optional Comment
           </label>
 
@@ -290,33 +288,31 @@ export default function OrderFlow() {
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             rows={3}
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-cyan-500"
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-cyan-600"
             placeholder="e.g., Meet me at the second gate."
           />
         </div>
 
         {error && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+          <div className="bg-red-50 text-red-800 text-sm rounded-lg p-3">
             {error}
           </div>
         )}
 
         <div className="flex gap-3">
           <button
-            type="button"
             onClick={() => setStep(2)}
-            className="flex-1 rounded-lg border border-gray-300 py-3 font-semibold text-gray-700"
+            className="flex-1 border border-gray-300 text-gray-900 font-semibold py-3 rounded-lg"
           >
             Back
           </button>
 
           <button
-            type="button"
             onClick={() => setStep(4)}
             disabled={paymentMethod === 'transfer' && !receiptFile}
-            className="flex-1 rounded-lg bg-cyan-600 py-3 font-semibold text-white disabled:opacity-50"
+            className="flex-1 bg-cyan-700 text-white font-semibold py-3 rounded-lg hover:bg-cyan-800 disabled:opacity-50"
           >
-            Review
+            Review Order
           </button>
         </div>
       </div>
@@ -328,40 +324,35 @@ export default function OrderFlow() {
       <div className="space-y-6">
         <h2 className="font-bold text-gray-900">Review Order</h2>
 
-        <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-5 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-500">Quantity:</span>
-            <span className="font-semibold">{quantity} bags</span>
+        <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3 text-sm">
+          <div className="flex justify-between gap-3">
+            <span className="text-gray-700">Quantity:</span>
+            <span className="font-semibold text-gray-900">
+              {quantity} bags
+            </span>
           </div>
 
-          <div className="flex justify-between">
-            <span className="text-gray-500">Payment:</span>
-            <span className="font-semibold capitalize">{paymentMethod}</span>
+          <div className="flex justify-between gap-3">
+            <span className="text-gray-700">Payment:</span>
+            <span className="font-semibold text-gray-900 capitalize">
+              {paymentMethod === 'transfer' ? 'Bank Transfer' : paymentMethod}
+            </span>
           </div>
 
           {paymentMethod === 'transfer' && (
-            <>
-              <div className="flex justify-between gap-3">
-                <span className="text-gray-500">Bank:</span>
-                <span className="font-semibold">{bankName}</span>
-              </div>
-
-              <div className="flex justify-between gap-3">
-                <span className="text-gray-500">Account Name:</span>
-                <span className="text-right font-semibold">{accountName}</span>
-              </div>
-
-              <div className="flex justify-between gap-3">
-                <span className="text-gray-500">Account Number:</span>
-                <span className="font-semibold">{accountNumber}</span>
-              </div>
-            </>
+            <div className="bg-cyan-50 rounded-lg p-3 space-y-1">
+              <p className="font-semibold text-gray-900">
+                Transfer to {bankName}
+              </p>
+              <p className="text-gray-800">{accountName}</p>
+              <p className="font-bold text-gray-900">{accountNumber}</p>
+            </div>
           )}
 
           {receiptFile && (
             <div className="flex justify-between gap-3">
-              <span className="text-gray-500">Receipt:</span>
-              <span className="max-w-[150px] truncate font-semibold">
+              <span className="text-gray-700">Receipt:</span>
+              <span className="font-semibold text-gray-900 truncate max-w-[150px]">
                 {receiptFile.name}
               </span>
             </div>
@@ -369,34 +360,38 @@ export default function OrderFlow() {
 
           {comment && (
             <div className="flex justify-between gap-3">
-              <span className="text-gray-500">Note:</span>
-              <span className="max-w-[150px] truncate font-semibold">
+              <span className="text-gray-700">Note:</span>
+              <span className="font-semibold text-gray-900 break-words">
                 {comment}
               </span>
             </div>
           )}
 
-          <div className="flex justify-between border-t pt-3">
+          <div className="border-t border-gray-200 pt-3 flex justify-between">
             <span className="font-bold text-gray-900">Total:</span>
-            <span className="font-bold text-cyan-600">
+            <span className="font-bold text-cyan-800">
               ₦{total.toLocaleString()}
             </span>
           </div>
         </div>
 
+        {error && (
+          <div className="bg-red-50 text-red-800 text-sm rounded-lg p-3">
+            {error}
+          </div>
+        )}
+
         <button
-          type="button"
           onClick={handleSubmit}
           disabled={loading}
-          className="w-full rounded-lg bg-cyan-600 py-3 font-semibold text-white hover:bg-cyan-700 disabled:opacity-50"
+          className="w-full bg-cyan-700 text-white font-semibold py-3 rounded-lg hover:bg-cyan-800 disabled:opacity-50"
         >
-          {loading ? 'Placing Order…' : 'Confirm & Submit'}
+          {loading ? 'Placing Order...' : 'Confirm & Submit'}
         </button>
 
         <button
-          type="button"
           onClick={() => setStep(3)}
-          className="w-full text-sm text-gray-500 hover:underline"
+          className="w-full text-gray-700 text-sm hover:underline"
         >
           ← Back
         </button>
