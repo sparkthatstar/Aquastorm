@@ -14,6 +14,7 @@ export default function SignupForm() {
   const [phoneConfirm, setPhoneConfirm] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [agreedToPolicies, setAgreedToPolicies] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -31,6 +32,13 @@ export default function SignupForm() {
       return
     }
 
+    if (!agreedToPolicies) {
+      setError(
+        'Please agree to the Terms & Conditions and Privacy Policy before signing up.'
+      )
+      return
+    }
+
     setLoading(true)
 
     const { error: signUpError } = await supabase.auth.signUp({
@@ -41,6 +49,7 @@ export default function SignupForm() {
           full_name: fullName,
           phone,
           room_number: roomNumber,
+          agreed_to_terms: true,
         },
       },
     })
@@ -126,6 +135,7 @@ export default function SignupForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-3 pr-12 rounded-xl bg-white/10 border border-white/20 text-white placeholder-cyan-200/50 focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm transition-all"
+            placeholder="Create a password"
           />
 
           <button
@@ -136,7 +146,6 @@ export default function SignupForm() {
             className="absolute inset-y-0 right-0 flex items-center justify-center px-4 text-cyan-200 hover:text-white transition-colors"
           >
             {showPassword ? (
-              // Eye with a slash: password is visible
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="22"
@@ -155,7 +164,6 @@ export default function SignupForm() {
                 <path d="M6.2 6.2A12.2 12.2 0 003 12c.7 2.5 4 7 9 7a10.7 10.7 0 004.1-.8" />
               </svg>
             ) : (
-              // Open eye: password is hidden
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="22"
@@ -176,8 +184,46 @@ export default function SignupForm() {
         </div>
       </div>
 
+      {/* Required Terms & Conditions and Privacy Policy agreement */}
+      <div className="rounded-xl border border-white/20 bg-white/5 p-4">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            required
+            checked={agreedToPolicies}
+            onChange={(e) => setAgreedToPolicies(e.target.checked)}
+            className="mt-1 h-4 w-4 shrink-0 accent-cyan-400 cursor-pointer"
+          />
+
+          <span className="text-sm leading-6 text-white">
+            I have read and agree to AquaStorm&apos;s{' '}
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-cyan-300 underline hover:text-white"
+            >
+              Terms &amp; Conditions
+            </a>{' '}
+            and{' '}
+            <a
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-cyan-300 underline hover:text-white"
+            >
+              Privacy Policy
+            </a>
+            .
+          </span>
+        </label>
+      </div>
+
       {error && (
-        <div className="bg-red-500/20 border border-red-400/50 text-red-200 text-sm rounded-lg p-3 backdrop-blur-sm">
+        <div
+          role="alert"
+          className="bg-red-500/20 border border-red-400/50 text-red-200 text-sm rounded-lg p-3 backdrop-blur-sm"
+        >
           {error}
         </div>
       )}
